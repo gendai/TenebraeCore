@@ -1,0 +1,17 @@
+general:
+  chat:
+    emoterange:
+    sayrange:
+    yellrange:
+sql:
+  host:
+  port:
+  database:
+  user:
+  password:
+  players_table: players
+  item_template: item_template
+  quest_template: quest_template
+  creature_template: creature_template
+  loot_template: loot_template
+  string_template: string_template
