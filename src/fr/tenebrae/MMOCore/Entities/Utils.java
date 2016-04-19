@@ -11,7 +11,7 @@ import org.bukkit.boss.BarStyle;
 import org.bukkit.entity.Player;
 
 import fr.tenebrae.MMOCore.Main;
-import fr.tenebrae.MMOCore.Mechanics.Character;
+import fr.tenebrae.MMOCore.Characters.Character;
 
 public class Utils {
 

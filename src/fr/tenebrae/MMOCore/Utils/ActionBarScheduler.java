@@ -35,9 +35,9 @@ public class ActionBarScheduler extends BukkitRunnable {
 		this.ticks = ticks;
 	}
 	
-	public ActionBarScheduler(ArrayList<fr.tenebrae.MMOCore.Mechanics.Character> characters, String msg, int ticks) {
+	public ActionBarScheduler(ArrayList<fr.tenebrae.MMOCore.Characters.Character> characters, String msg, int ticks) {
 		List<Player> players = new ArrayList<Player>();
-		for (fr.tenebrae.MMOCore.Mechanics.Character c : characters) {
+		for (fr.tenebrae.MMOCore.Characters.Character c : characters) {
 			players.add(c.getAccount());
 		}
 		if (ticks <= 40) {

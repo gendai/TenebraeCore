@@ -17,8 +17,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import fr.tenebrae.MMOCore.Mechanics.Character;
 import fr.tenebrae.MMOCore.Utils.NamePlatesAPI;
+import fr.tenebrae.MMOCore.Characters.Character;
 
 public class Main extends JavaPlugin {
 	

@@ -16,6 +16,8 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
+import fr.tenebrae.MMOCore.Characters.Character;
+
 public class Sound {
 
 	public List<Character> characters = new ArrayList<Character>();

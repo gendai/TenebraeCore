@@ -29,10 +29,10 @@ import fr.tenebrae.MMOCore.Items.Components.ItemType;
 import fr.tenebrae.MMOCore.Items.Components.TriggerType;
 import fr.tenebrae.MMOCore.Items.Components.WeaponPlace;
 import fr.tenebrae.MMOCore.Items.Components.WeaponType;
-import fr.tenebrae.MMOCore.Mechanics.Character;
 import fr.tenebrae.MMOCore.Mechanics.Spells;
 import fr.tenebrae.MMOCore.Mechanics.Stats;
 import fr.tenebrae.MMOCore.Utils.SQLHelper;
+import fr.tenebrae.MMOCore.Characters.Character;
 
 public class Item {
 

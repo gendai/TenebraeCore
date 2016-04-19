@@ -4,6 +4,8 @@ import net.minecraft.server.v1_9_R1.Entity;
 
 import org.bukkit.craftbukkit.v1_9_R1.entity.CraftPlayer;
 
+import fr.tenebrae.MMOCore.Characters.Character;
+
 public class DamageType {
 	
 	public Entity damager;

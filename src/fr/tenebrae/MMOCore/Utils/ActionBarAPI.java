@@ -8,7 +8,7 @@ import java.util.List;
 import org.bukkit.entity.Player;
 
 import fr.tenebrae.MMOCore.Main;
-import fr.tenebrae.MMOCore.Mechanics.Character;
+import fr.tenebrae.MMOCore.Characters.Character;
 
 /**
  * <b>ActionBar API</b>
