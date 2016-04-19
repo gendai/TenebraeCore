@@ -5,8 +5,8 @@ import net.minecraft.server.v1_9_R1.NBTTagCompound;
 import org.bukkit.Material;
 
 import fr.tenebrae.MMOCore.Items.Item;
-import fr.tenebrae.MMOCore.ItemsComponents.ItemQuality;
-import fr.tenebrae.MMOCore.ItemsComponents.ItemType;
+import fr.tenebrae.MMOCore.Items.Components.ItemQuality;
+import fr.tenebrae.MMOCore.Items.Components.ItemType;
 import fr.tenebrae.MMOCore.Mechanics.Stats;
 
 public class L01RecruitShirt extends Item {
