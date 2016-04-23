@@ -19,6 +19,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import fr.tenebrae.MMOCore.Utils.NamePlatesAPI;
 import fr.tenebrae.MMOCore.Characters.Character;
+import fr.tenebrae.MMOCore.Commands.SpawnSpider;
+import fr.tenebrae.MMOCore.Entities.CEntityTypes;
 
 public class Main extends JavaPlugin {
 	
@@ -61,15 +63,14 @@ public class Main extends JavaPlugin {
 
 	public MySQL database;
 	
-	public static Logger log = plugin.getLogger();
+	public static Logger log; //= plugin.getLogger();
 	
 	@Override
 	public void onEnable() {
 		this.saveDefaultConfig();
-		this.saveDefaultCharactersFile();
-		this.saveDefaultMessagesFile();
+		//this.saveDefaultCharactersFile();
+		//this.saveDefaultMessagesFile();
 		config = this.getConfig();
-		messages = this.getMessagesFile();
 		emoterange = config.getDouble("general.chat.emoterange");
 		sayrange = config.getDouble("general.chat.sayrange");
 		yellrange = config.getDouble("general.chat.yellrange");
@@ -97,6 +98,9 @@ public class Main extends JavaPlugin {
 		NamePlatesAPI.init();
 		PluginManager pm = Bukkit.getServer().getPluginManager();
 		pm.registerEvents(new Listeners(this), this);
+		log = plugin.getLogger();
+		this.getCommand("spw").setExecutor(new SpawnSpider());
+		CEntityTypes.registerEntities();
 	}
 	
 	@Override

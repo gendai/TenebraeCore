@@ -33,7 +33,7 @@ import fr.tenebrae.MMOCore.Main;
 public class AnimationAPI {
 
 	public static boolean sendAnimation(net.minecraft.server.v1_9_R1.Entity target, final Animation anim, Player... players) {
-		return sendAnimation(((CraftEntity.getEntity(target.getWorld().getServer(), target)).getHandle()), anim, (players == null ? null : players));
+		return sendAnimation((Entity)((CraftEntity.getEntity(target.getWorld().getServer(), target))), anim, (players == null ? null : players));
 	}
 	
 	public static boolean sendAnimation(Entity target, final Animation anim, Player... players) {

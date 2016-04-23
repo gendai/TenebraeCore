@@ -130,7 +130,7 @@ public class Sound {
 	}
 	
 	public void play() {
-		PacketPlayOutNamedSoundEffect packet = new PacketPlayOutNamedSoundEffect(SoundEffect.a.get(new MinecraftKey(sound)),
+		PacketPlayOutNamedSoundEffect packet = new PacketPlayOutNamedSoundEffect(new SoundEffect(new MinecraftKey(sound)),
 													category, x, y, z, doesFollow ? 100000F : volume, pitch*63F);
 		if (!characters.isEmpty()) {
 			for (Character c : characters) c.getNMSAccount().playerConnection.sendPacket(packet);
