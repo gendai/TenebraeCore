@@ -1,0 +1,7 @@
+name: tenebrae
+main: fr.tenebrae.MMOCore.Main
+version: 0.0.1
+commands:
+  spw:
+    description: Spawn spider mine L01
+    usage: /spw

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -106,10 +107,10 @@ public class L01MineSpider extends EntityCaveSpider implements ICreature {
 	}
 	
 	public void clearGoals() {
-		List<?> goalB = (List<?>)Utils.getPrivateField("b", PathfinderGoalSelector.class, goalSelector); goalB.clear();
-        List<?> goalC = (List<?>)Utils.getPrivateField("c", PathfinderGoalSelector.class, goalSelector); goalC.clear();
-        List<?> targetB = (List<?>)Utils.getPrivateField("b", PathfinderGoalSelector.class, targetSelector); targetB.clear();
-        List<?> targetC = (List<?>)Utils.getPrivateField("c", PathfinderGoalSelector.class, targetSelector); targetC.clear();
+		LinkedHashSet<?> goalB = (LinkedHashSet<?>)Utils.getPrivateField("b", PathfinderGoalSelector.class, goalSelector); goalB.clear();
+        LinkedHashSet<?> goalC = (LinkedHashSet<?>)Utils.getPrivateField("c", PathfinderGoalSelector.class, goalSelector); goalC.clear();
+        LinkedHashSet<?> targetB = (LinkedHashSet<?>)Utils.getPrivateField("b", PathfinderGoalSelector.class, targetSelector); targetB.clear();
+        LinkedHashSet<?> targetC = (LinkedHashSet<?>)Utils.getPrivateField("c", PathfinderGoalSelector.class, targetSelector); targetC.clear();
 	}
 	
 	public void setupGoals() {
