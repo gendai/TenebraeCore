@@ -2,25 +2,41 @@ package fr.tenebrae.MMOCore;
 
 import java.beans.PropertyVetoException;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+
+import net.minecraft.server.v1_9_R1.Packet;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.craftbukkit.v1_9_R1.entity.CraftPlayer;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
+
+import com.comphenix.packetwrapper.WrapperPlayServerEntityMetadata;
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
+import com.comphenix.protocol.events.ListenerPriority;
+import com.comphenix.protocol.events.PacketAdapter;
+import com.comphenix.protocol.events.PacketEvent;
+import com.comphenix.protocol.wrappers.WrappedWatchableObject;
 
 import fr.tenebrae.MMOCore.Characters.Character;
 import fr.tenebrae.MMOCore.Chat.ChatManager;
-import fr.tenebrae.MMOCore.Commands.SpawnSpider;
 import fr.tenebrae.MMOCore.Entities.CEntityTypes;
 import fr.tenebrae.MMOCore.Items.ItemRegistry;
 import fr.tenebrae.MMOCore.Utils.NamePlatesAPI;
+import fr.tenebrae.MMOCore.Utils.TranslatedString;
 
 public class Main extends JavaPlugin {
 
@@ -48,6 +64,7 @@ public class Main extends JavaPlugin {
 
 	public DataSource ds;
 	public BungeeMessageReceiver bmr;
+	public ProtocolManager protocolManager;
 
 	public static Logger log;
 
@@ -55,7 +72,7 @@ public class Main extends JavaPlugin {
 	public void onEnable() {
 		this.saveDefaultConfig();
 		config = this.getConfig();
-
+		chatConfig = config.getConfigurationSection("general.chat.channel");
 		DB_HOST = config.getString("sql.host");
 		DB_PORT = config.getInt("sql.port");
 		DB_DATABASE = config.getString("sql.database");
@@ -76,6 +93,7 @@ public class Main extends JavaPlugin {
 		}
 		plugin = this;
 		log = this.getLogger();
+		protocolManager = ProtocolLibrary.getProtocolManager();
 		PluginManager pm = Bukkit.getServer().getPluginManager();
 		pm.registerEvents(new Listeners(this), this);
 
@@ -87,16 +105,70 @@ public class Main extends JavaPlugin {
 		NamePlatesAPI.init();
 		CEntityTypes.registerEntities();
 		ItemRegistry.registerItems();
+		initEntitiesTranslator();
 
 		new ChatManager().init(chatConfig);
-		this.getCommand("spw").setExecutor(new SpawnSpider());
 
-		Main.START_LOCATION = new Location(Bukkit.getWorld("MMOErdrae"), 352.5, 74.25, -1521.5);
+
+		new BukkitRunnable() {
+			@Override
+			public void run() {
+				Main.START_LOCATION = new Location(Bukkit.getWorld("MMOErdrae"), 352.5, 74.25, -1521.5);
+			}
+		}.runTaskLater(this, 30L);
 
 	}
 
 	@Override
 	public void onDisable() {
 
+	}
+
+	public void initEntitiesTranslator() {
+		protocolManager.addPacketListener(new PacketAdapter(this, ListenerPriority.NORMAL, PacketType.Play.Server.ENTITY_METADATA) {
+			@Override
+			public void onPacketSending(PacketEvent evt) {
+				if (evt.getPacketType() == PacketType.Play.Server.ENTITY_METADATA) {
+					WrapperPlayServerEntityMetadata packet = new WrapperPlayServerEntityMetadata(evt.getPacket().deepClone());
+					try {
+						if (packet.getEntity(evt.getPlayer().getWorld()).getType() != EntityType.ARMOR_STAND) return;
+					} catch (NullPointerException npe) { return; }
+					List<WrappedWatchableObject> meta = packet.getMetadata();
+					if (meta.get(2) == null) return;
+					WrappedWatchableObject oname = meta.get(2);
+					String serializedName = (String) oname.getValue();
+					if (!serializedName.contains("@")) {
+						try {
+							Integer.valueOf(serializedName);
+						} catch (NumberFormatException ee) { return; }
+					}
+					if (serializedName.contains("@")) {
+						String[] splittedName = serializedName.split("@");
+						String name = TranslatedString.getString(Integer.valueOf(splittedName[0]), evt.getPlayer());
+						int level = Integer.valueOf(splittedName[1]);
+						name += " §7[§6Lv. "+(level < 10 ? "0"+level : level)+"§7]";
+						oname.setValue(name);
+					} else {
+						String name = TranslatedString.getString(Integer.valueOf(serializedName), evt.getPlayer());
+						oname.setValue(name);
+					}
+					meta.set(2, oname);
+					packet.setMetadata(meta);
+					evt.setCancelled(true);
+					((CraftPlayer)evt.getPlayer()).getHandle().playerConnection.sendPacket((Packet<?>) packet.getHandle().getHandle());
+				}
+			}
+		});
+	}
+
+	public Object getPrivateField(Class<?> clazz, String fieldName) {
+		try {
+			Field field = clazz.getDeclaredField(fieldName);
+			field.setAccessible(true);
+			return field.get(null);
+		} catch (Exception e) { 
+			e.printStackTrace();
+			return null;
+		}
 	}
 }
