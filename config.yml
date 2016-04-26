@@ -1,8 +1,15 @@
 general:
   chat:
-    emoterange:
-    sayrange:
-    yellrange:
+    channel:
+      emote:
+        pattern: '{Player} > {MSG}'
+        range: 16
+      say:
+        pattern: '{Player} >> {MSG}'
+        range: 32
+      yell:
+        pattern: '{Player} >>> {MSG}'
+        range: 64
 sql:
   host:
   port:
