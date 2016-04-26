@@ -10,7 +10,9 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import fr.tenebrae.MMOCore.Chat.ChatManager;
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -44,9 +46,7 @@ public class Main extends JavaPlugin {
 	
 	public static Map<Player, Character> connectedCharacters = new HashMap<Player, Character>();
 	
-	public double emoterange;
-	public double sayrange;
-	public double yellrange;
+	public ConfigurationSection chatConfig;
 
 	public static String DB_HOST;
 	public static int DB_PORT;
@@ -71,9 +71,8 @@ public class Main extends JavaPlugin {
 		//this.saveDefaultCharactersFile();
 		//this.saveDefaultMessagesFile();
 		config = this.getConfig();
-		emoterange = config.getDouble("general.chat.emoterange");
-		sayrange = config.getDouble("general.chat.sayrange");
-		yellrange = config.getDouble("general.chat.yellrange");
+
+		chatConfig = config.getConfigurationSection("general.chat.channel");
 
 		DB_HOST = config.getString("sql.host");
 		DB_PORT = config.getInt("sql.port");
@@ -96,6 +95,7 @@ public class Main extends JavaPlugin {
 				DB_PASSWORD);
 		plugin = this;
 		NamePlatesAPI.init();
+        new ChatManager().init(chatConfig);
 		PluginManager pm = Bukkit.getServer().getPluginManager();
 		pm.registerEvents(new Listeners(this), this);
 		log = plugin.getLogger();
