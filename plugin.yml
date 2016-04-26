@@ -1,13 +1,12 @@
-name: tenebrae
+name: MMOCore
+authors: [Arektor,Gendai,Mr_Freezeex]
+version: 0.0.38
 main: fr.tenebrae.MMOCore.Main
-version: 0.0.1
 commands:
-  spw:
-    description: Spawn spider mine L01
-    usage: /spw
   me:
-    description: send chat message in emote channel
-    usage: /me <msg>
+    description: emote channel
+    usage: /me
   yell:
-    description: send chat message in yell channel
-    usage: /yell <msg>
+    description: yell channel
+    usage: /yell
+depend: [ProtocolLib]
