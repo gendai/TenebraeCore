@@ -6,11 +6,13 @@ import net.minecraft.server.v1_9_R1.Vec3D;
 
 import org.bukkit.Location;
 
+import fr.tenebrae.MMOCore.Entities.ICreature;
 import fr.tenebrae.MMOCore.Entities.RandomPositionGenerator;
 
 public class PathfinderGoalRandomStroll extends PathfinderGoal
 {
 	private EntityCreature a;
+	private ICreature creature;
 	private double b;
 	private double c;
 	private double d;
@@ -19,13 +21,14 @@ public class PathfinderGoalRandomStroll extends PathfinderGoal
 	private boolean g;
 	private Location spawn;
 
-	public PathfinderGoalRandomStroll(EntityCreature paramEntityCreature, Location spawn, double speed)
+	public PathfinderGoalRandomStroll(ICreature paramEntityCreature, Location spawn, double speed)
 	{
 		this(paramEntityCreature, spawn, speed, 120);
 	}
 
-	public PathfinderGoalRandomStroll(EntityCreature paramEntityCreature, Location spawn, double speed, int timeBetweenStrolls) {
-		this.a = paramEntityCreature;
+	public PathfinderGoalRandomStroll(ICreature paramEntityCreature, Location spawn, double speed, int timeBetweenStrolls) {
+		this.creature = paramEntityCreature;
+		this.a = (EntityCreature)creature;
 		this.speed = speed;
 		this.timeBetweenStrolls = timeBetweenStrolls;
 		this.spawn = spawn;
@@ -56,6 +59,8 @@ public class PathfinderGoalRandomStroll extends PathfinderGoal
 
 	public boolean b()
 	{
+		if (this.creature.getTarget() != null) return false;
+		if (this.creature.isResetting()) return false;
 		return !this.a.getNavigation().n();
 	}
 

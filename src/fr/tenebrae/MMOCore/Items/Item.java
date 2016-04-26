@@ -1,6 +1,5 @@
 package fr.tenebrae.MMOCore.Items;
 
-import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -22,6 +21,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import fr.tenebrae.MMOCore.Main;
+import fr.tenebrae.MMOCore.SQLResultSet;
+import fr.tenebrae.MMOCore.Characters.Character;
 import fr.tenebrae.MMOCore.Items.Components.GemSlot;
 import fr.tenebrae.MMOCore.Items.Components.GemType;
 import fr.tenebrae.MMOCore.Items.Components.ItemQuality;
@@ -32,7 +33,7 @@ import fr.tenebrae.MMOCore.Items.Components.WeaponType;
 import fr.tenebrae.MMOCore.Mechanics.Spells;
 import fr.tenebrae.MMOCore.Mechanics.Stats;
 import fr.tenebrae.MMOCore.Utils.SQLHelper;
-import fr.tenebrae.MMOCore.Characters.Character;
+import fr.tenebrae.MMOCore.Utils.Serializers.ItemStackSerializer;
 
 public class Item {
 
@@ -44,7 +45,7 @@ public class Item {
 	private int damageData = 0;
 	private ItemType type = null;
 	private ItemQuality quality = null;
-	private Map<Stats, Integer> stats = new HashMap<Stats, Integer>();
+	private Map<Stats, Double> stats = new HashMap<Stats, Double>();
 	private int itemLevel = 0;
 	private int levelRequired = 0;
 	private List<GemSlot> gemSlots = new ArrayList<GemSlot>();
@@ -94,23 +95,26 @@ public class Item {
 	}
 	
 	public Item(ItemStack is) {
+		this.itemStack = ItemUtils.asNMS(is);
 		NBTTagCompound nbt = new NBTTagCompound();
-		CraftItemStack.asNMSCopy(is).save(nbt);
+		this.itemStack.save(nbt);
 		setInfosFrom(nbt);
-		try {
-			this.itemStack = asNMS(is);
-		} catch (IllegalArgumentException | IllegalAccessException
-				| NoSuchFieldException | SecurityException e) {
-			e.printStackTrace();
-		}
 	}
 	
-	public static net.minecraft.server.v1_9_R1.ItemStack asNMS(org.bukkit.inventory.ItemStack original) throws IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException {
-		CraftItemStack stack = (CraftItemStack)original;
-		Field f;
-		f = stack.getClass().getDeclaredField("handle");
-		f.setAccessible(true);
-		return (net.minecraft.server.v1_9_R1.ItemStack) f.get(stack);
+	public Item(ItemStack is, boolean emergency) {
+		if (!emergency) {
+			this.itemStack = ItemUtils.asNMS(is);
+			NBTTagCompound nbt = new NBTTagCompound();
+			this.itemStack.save(nbt);
+			setInfosFrom(nbt);
+		} else {
+			CraftItemStack cIS = CraftItemStack.asCraftCopy(is);
+			cIS.setItemMeta(CraftItemStack.getItemMeta(CraftItemStack.asNMSCopy(is)));
+			this.itemStack = ItemUtils.asNMS(cIS);
+			NBTTagCompound nbt = new NBTTagCompound();
+			this.itemStack.save(nbt);
+			setInfosFrom(nbt);
+		}
 	}
 	
 	public NBTTagCompound setInfosOn(NBTTagCompound nbt) {
@@ -137,10 +141,10 @@ public class Item {
 		
 		if (!stats.isEmpty()) {
 			NBTTagList statsList = new NBTTagList();
-			for (Entry<Stats, Integer> entry : stats.entrySet()) {
+			for (Entry<Stats, Double> entry : stats.entrySet()) {
 				NBTTagCompound cmpnd = new NBTTagCompound();
 				cmpnd.setString("stat", entry.getKey().toString());
-				cmpnd.setInt("amount", entry.getValue());
+				cmpnd.setDouble("amount", entry.getValue());
 				statsList.add(cmpnd);
 			}
 			mmoNBT.set("stats", statsList);
@@ -214,7 +218,7 @@ public class Item {
 				int i = 0;
 				while (i < list.size()) {
 					NBTTagCompound cmpnd = list.get(i);
-					stats.put(Stats.valueOf(cmpnd.getString("stat")), cmpnd.getInt("amount"));
+					stats.put(Stats.valueOf(cmpnd.getString("stat")), cmpnd.getDouble("amount"));
 					i++;
 				}
 			}
@@ -277,11 +281,11 @@ public class Item {
 		this.quality = quality;
 	}
 	
-	public Map<Stats, Integer> getStats() {
+	public Map<Stats, Double> getStats() {
 		return stats;
 	}
 	
-	public void setStats(Map<Stats, Integer> stats) {
+	public void setStats(Map<Stats, Double> stats) {
 		this.stats = stats;
 	}
 	
@@ -316,10 +320,12 @@ public class Item {
 	public String getName(String language) {
 		String returned = "null";
 		try {
-			ResultSet nameRow = SQLHelper.getSortedEntrys(Main.DB_DATABASE, Main.DB_STRING_TEMPLATE, "entry", nameId);
+			SQLResultSet sqlRS = SQLHelper.getSortedEntrys(Main.DB_DATABASE, Main.DB_STRING_TEMPLATE, "entry", nameId);
+			ResultSet nameRow = sqlRS.getResultSet();
 			if (!nameRow.next()) throw new SQLException("String template did not contained the requested entry ("+nameId+")");
 			if (nameRow.isAfterLast()) throw new SQLException("String template did not contained the requested entry ("+nameId+")");
 			returned = nameRow.getString(language);
+			sqlRS.close();
 		} catch (Exception e) { e.printStackTrace(); }
 		if (returned == null) returned = "null";
 		return returned;
@@ -329,7 +335,8 @@ public class Item {
 		List<String> returned = new ArrayList<String>();
 		
 		try {
-			ResultSet loreRow = SQLHelper.getSortedEntrys(Main.DB_DATABASE, Main.DB_STRING_TEMPLATE, "entry", loreId);
+			SQLResultSet sqlRS = SQLHelper.getSortedEntrys(Main.DB_DATABASE, Main.DB_STRING_TEMPLATE, "entry", loreId);
+			ResultSet loreRow = sqlRS.getResultSet();
 			if (!loreRow.next()) throw new SQLException("String template did not contained the requested entry ("+loreId+")");
 			if (loreRow.isAfterLast()) throw new SQLException("String template did not contained the requested entry ("+loreId+")");
 			String value = loreRow.getString(language);
@@ -338,6 +345,7 @@ public class Item {
 				value = "§8"+value.substring(32);
 			}
 			returned.add(value);
+			sqlRS.close();
 		} catch (Exception e) { e.printStackTrace(); }
 		
 		return returned;
@@ -445,12 +453,12 @@ public class Item {
 		}
 		if (!this.getStats().isEmpty()) {
 			if (this.getStats().containsKey(Stats.ATTACK_SPEED)) {
-				returned.add("§7"+Stats.ATTACK_SPEED.getString(language)+(this.getStats().get(Stats.ATTACK_SPEED) > 0 ? "§6" : "§c-")+((float)this.getStats().get(Stats.ATTACK_SPEED))/1000);
+				returned.add("§7"+Stats.ATTACK_SPEED.getString(language)+(this.getStats().get(Stats.ATTACK_SPEED) > 0 ? "§6" : "§c-")+(Double.valueOf(this.getStats().get(Stats.ATTACK_SPEED)))/1000);
 			}
 			if (this.getStats().containsKey(Stats.ARMOR)) {
 				returned.add("§7"+Stats.ARMOR.getString(language)+(this.getStats().get(Stats.ARMOR) > 0 ? "§2+" : "§c-")+this.getStats().get(Stats.ARMOR));
 			}
-			for (Entry<Stats,Integer> stat : this.getStats().entrySet()) {
+			for (Entry<Stats,Double> stat : this.getStats().entrySet()) {
 				if (stat.getKey() != Stats.ARMOR && stat.getKey() != Stats.ATTACK_SPEED)
 					returned.add("§7"+stat.getKey().getString(language)+(stat.getValue() > 0 ? "§2+" : "§c-")+stat.getValue());
 			}
@@ -494,10 +502,12 @@ public class Item {
 	public String getLocaleString(int id, String language) {
 		String returned = "null";
 		try {
-			ResultSet nameRow = SQLHelper.getSortedEntrys(Main.DB_DATABASE, Main.DB_STRING_TEMPLATE, "entry", id);
+			SQLResultSet sqlRS = SQLHelper.getSortedEntrys(Main.DB_DATABASE, Main.DB_STRING_TEMPLATE, "entry", id);
+			ResultSet nameRow = sqlRS.getResultSet();
 			if (!nameRow.next()) throw new SQLException("String template did not contained the requested entry ("+id+")");
 			if (nameRow.isAfterLast()) throw new SQLException("String template did not contained the requested entry ("+id+")");
 			returned = nameRow.getString(language);
+			sqlRS.close();
 		} catch (Exception e) { e.printStackTrace(); }
 		if (returned == null) returned = "null";
 		return returned;
@@ -590,7 +600,7 @@ public class Item {
 		this.maxDurability = maxDurability;
 	}
 	
-	public void addStat(Stats stat, Integer amount) {
+	public void addStat(Stats stat, Double amount) {
 		this.stats.put(stat, amount);
 	}
 	
@@ -612,5 +622,20 @@ public class Item {
 
 	public void setMaxDmg(int maxDmg) {
 		this.maxDmg = maxDmg;
+	}
+	
+	public boolean instanceOf(Class<? extends Item> clazz) {
+		try {
+			if (clazz.newInstance().getId() == this.getId()) return true;
+			else return false;
+		} catch (InstantiationException | IllegalAccessException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
+	@Override
+	public String toString() {
+		return ItemStackSerializer.toBase64(getItemStack());
 	}
 }

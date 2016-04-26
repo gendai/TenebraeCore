@@ -7,6 +7,9 @@ import java.util.Map.Entry;
 import fr.tenebrae.MMOCore.Items.Archer.L01RecruitTunic;
 import fr.tenebrae.MMOCore.Items.Archer.L01TrainingBow;
 import fr.tenebrae.MMOCore.Items.Assassin.L01TrainingDagger;
+import fr.tenebrae.MMOCore.Items.Coins.CopperCoin;
+import fr.tenebrae.MMOCore.Items.Coins.GoldCoin;
+import fr.tenebrae.MMOCore.Items.Coins.SilverCoin;
 import fr.tenebrae.MMOCore.Items.Mage.L01ApprenticeRobe;
 import fr.tenebrae.MMOCore.Items.Mage.L01TrainingStaff;
 import fr.tenebrae.MMOCore.Items.Warrior.L01RecruitShirt;
@@ -31,7 +34,11 @@ public enum ItemRegistry {
 	L02TarnishedMailHelmet(14, L02TarnishedMailHelmet.class),
 	L02TarnishedMailLeggings(15, L02TarnishedMailLeggings.class),
 	L03JeweledDagger(16, L03JeweledDagger.class),
-	L03ManaGatheringStaff(17, L03ManaGatheringStaff.class);
+	L03ManaGatheringStaff(17, L03ManaGatheringStaff.class),
+	L18Shadowfang(18, L18Shadowfang.class),
+	CopperCoin(997, CopperCoin.class),
+	SilverCoin(998, SilverCoin.class),
+	GoldCoin(999, GoldCoin.class);
 	
 	private int id = 0;
 	private Class<? extends Item> clazz = null;

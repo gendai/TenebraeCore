@@ -3,13 +3,15 @@ package fr.tenebrae.MMOCore.Items.Mage;
 import net.minecraft.server.v1_9_R1.NBTTagCompound;
 
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 
+import fr.tenebrae.MMOCore.Items.IEquipableItem;
 import fr.tenebrae.MMOCore.Items.Item;
 import fr.tenebrae.MMOCore.Items.Components.ItemQuality;
 import fr.tenebrae.MMOCore.Items.Components.ItemType;
 import fr.tenebrae.MMOCore.Mechanics.Stats;
 
-public class L01ApprenticeRobe extends Item {
+public class L01ApprenticeRobe extends Item implements IEquipableItem {
 
 	public L01ApprenticeRobe(NBTTagCompound nbt) {
 		super(nbt);
@@ -28,8 +30,13 @@ public class L01ApprenticeRobe extends Item {
 		this.setLoreId(0);
 		this.setMaterial(Material.GOLD_CHESTPLATE);
 		this.setDamageData(0);
-		this.addStat(Stats.ARMOR, 1);
+		this.addStat(Stats.ARMOR, 1.0);
 		
 		createItemStack();
+	}
+
+	@Override
+	public void onEquip(Player player) {
+		
 	}
 }

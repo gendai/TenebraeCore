@@ -10,19 +10,20 @@ import org.bukkit.boss.BossBar;
 import fr.tenebrae.MMOCore.Items.Item;
 
 public interface ICreature {
-
+	
 	public void onDeath();
 	public boolean isAttackReady();
 	public void setTarget(Entity target);
+	public Entity getTarget();
 	public void lookAt(Entity target);
 	public void lookAt(Location target);
 	public void moveTo(Location loc);
 	public void moveTo(Location loc, double speed);
 	public void moveTo(double x, double y, double z);
 	public void moveTo(double x, double y, double z, double speed);
-	public Map<Item, Integer> getDrops();
-	public void setDrops(Map<Item,Integer> drops);
-	public void addDrop(Item drop, int percent);
+	public Map<Item, Double> getDrops();
+	public void setDrops(Map<Item,Double> drops);
+	public void addDrop(Item drop, double percent);
 	public void removeDrop(Item drop);
 	public boolean hasDrop(Item item);
 	public boolean isMoving();
@@ -42,5 +43,8 @@ public interface ICreature {
 	public boolean doesDarkenSky();
 	public void setCreateFog(boolean createFog);
 	public boolean doesCreateFog();
+	public double getCriticalChance();
+	public double getArmor();
+	public double getMagicalArmor();
 	
 }

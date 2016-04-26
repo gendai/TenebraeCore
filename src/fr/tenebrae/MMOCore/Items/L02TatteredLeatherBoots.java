@@ -3,12 +3,13 @@ package fr.tenebrae.MMOCore.Items;
 import net.minecraft.server.v1_9_R1.NBTTagCompound;
 
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 
 import fr.tenebrae.MMOCore.Items.Components.ItemQuality;
 import fr.tenebrae.MMOCore.Items.Components.ItemType;
 import fr.tenebrae.MMOCore.Mechanics.Stats;
 
-public class L02TatteredLeatherBoots extends Item {
+public class L02TatteredLeatherBoots extends Item implements IEquipableItem {
 
 	public L02TatteredLeatherBoots(NBTTagCompound nbt) {
 		super(nbt);
@@ -27,9 +28,15 @@ public class L02TatteredLeatherBoots extends Item {
 		this.setLoreId(0);
 		this.setMaterial(Material.LEATHER_BOOTS);
 		this.setDamageData(0);
-		this.addStat(Stats.ARMOR, 2);
+		this.addStat(Stats.ARMOR, 2.0);
 		this.setSellPrice(3);
 		
 		createItemStack();
+	}
+
+	@Override
+	public void onEquip(Player player) {
+		// TODO Auto-generated method stub
+		
 	}
 }

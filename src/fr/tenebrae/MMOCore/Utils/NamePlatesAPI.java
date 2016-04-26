@@ -416,9 +416,11 @@ class NamePlate extends EntityArmorStand {
 	@Override
 	public void U() {
 		this.world.methodProfiler.a("entityBaseTick");
+		
 		if (!named.isAlive()) {
-			   this.stop();
+			this.stop();
 		}
+		
 		this.locX = named.locX;
 		this.locY = named.locY+elevation;
 		this.locZ = named.locZ;

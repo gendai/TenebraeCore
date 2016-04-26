@@ -1,9 +1,9 @@
 package fr.tenebrae.MMOCore.Utils;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import fr.tenebrae.MMOCore.Main;
+import fr.tenebrae.MMOCore.SQLResultSet;
 
 public class SQLHelper {
 	
@@ -21,22 +21,22 @@ public class SQLHelper {
 			request = request+"'"+String.valueOf(o)+"'"+(marker == values.length ? ") " : ", ");
 		}
 		request = request+";";
-		Main.plugin.database.updateSQL(request);
+		Main.plugin.ds.updateSQL(request);
 	}
 	
-	public static ResultSet getSortedEntrys(String dbname, String tableName, String column, Object value) throws SQLException, ClassNotFoundException {
+	public static SQLResultSet getSortedEntrys(String dbname, String tableName, String column, Object value) throws SQLException, ClassNotFoundException {
 		String request = "SELECT * FROM `"+dbname+"`.`"+tableName+"` WHERE `"+column+"` = '"+value+"';";
-		return Main.plugin.database.querySQL(request);
+		return Main.plugin.ds.querySQL(request);
 	}
 	
-	public static ResultSet getAllEntrys(String dbname, String tableName) throws SQLException, ClassNotFoundException {
+	public static SQLResultSet getAllEntrys(String dbname, String tableName) throws SQLException, ClassNotFoundException {
 		String request = "SELECT * FROM `"+dbname+"`.`"+tableName+"`";
-		return Main.plugin.database.querySQL(request);
+		return Main.plugin.ds.querySQL(request);
 	}
 	
 	public static void clearEntries(String dbname, String tableName) throws SQLException, ClassNotFoundException {
 		String request = "DELETE * FROM `"+dbname+"`.`"+tableName+"`";
-		Main.plugin.database.updateSQL(request);
+		Main.plugin.ds.updateSQL(request);
 	}
 	
 	public static void updateEntry(String dbname, String tableName, String columnToSeek, Object valueToSeek, String[] columnsToUpdate, Object[] valuesToUpdate) throws SQLException, ClassNotFoundException {
@@ -47,6 +47,6 @@ public class SQLHelper {
 			request = request+"`"+s+"` = '"+valuesToUpdate[marker-1]+"'"+(marker == columnsToUpdate.length ? " WHERE " : " , ");
 		}
 		request = request+"`"+columnToSeek+"` = '"+valueToSeek+"'";
-		Main.plugin.database.updateSQL(request);
+		Main.plugin.ds.updateSQL(request);
 	}
 }

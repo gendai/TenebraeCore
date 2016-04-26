@@ -4,17 +4,25 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import net.minecraft.server.v1_9_R1.EntityArmorStand;
+import net.minecraft.server.v1_9_R1.EntityHuman;
+import net.minecraft.server.v1_9_R1.EnumHand;
+import net.minecraft.server.v1_9_R1.EnumInteractionResult;
+import net.minecraft.server.v1_9_R1.ItemStack;
 import net.minecraft.server.v1_9_R1.MinecraftKey;
 import net.minecraft.server.v1_9_R1.PacketPlayOutNamedSoundEffect;
 import net.minecraft.server.v1_9_R1.SoundCategory;
 import net.minecraft.server.v1_9_R1.SoundEffect;
+import net.minecraft.server.v1_9_R1.Vec3D;
+import net.minecraft.server.v1_9_R1.World;
 
 import org.bukkit.Location;
+import org.bukkit.craftbukkit.v1_9_R1.CraftWorld;
 import org.bukkit.craftbukkit.v1_9_R1.entity.CraftPlayer;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 
 import fr.tenebrae.MMOCore.Characters.Character;
 
@@ -136,15 +144,57 @@ public class Sound {
 			for (Character c : characters) c.getNMSAccount().playerConnection.sendPacket(packet);
 		} else {
 			if (loc != null) {
-				ArmorStand as = (ArmorStand) loc.getWorld().spawnEntity(loc, EntityType.ARMOR_STAND);
-				as.setVisible(false);
-				as.setGravity(false);
-				as.setMarker(true);
+				ArmorStand as = new SoundHolder(loc).spawn();
 				for (Entity e : as.getNearbyEntities(radius, radius, radius)) {
 					if (e instanceof Player) ((CraftPlayer)((Player)e)).getHandle().playerConnection.sendPacket(packet);
 				}
 				as.remove();
 			}
 		}
+	}
+}
+
+class SoundHolder extends EntityArmorStand {
+	
+	public SoundHolder(World world) {
+		super(world);
+	}
+
+	public SoundHolder(org.bukkit.World world) {
+		super(((CraftWorld)world).getHandle());
+	}
+
+	public SoundHolder(Location loc) {
+		super(((CraftWorld)loc.getWorld()).getHandle());
+		this.setPosition(loc.getX(), loc.getY(), loc.getZ());
+		this.setInvisible(true);
+		this.setGravity(false);
+		this.setMarker(true);
+	}
+	
+	public ArmorStand spawn() {
+		this.world.addEntity(this, SpawnReason.CUSTOM);
+		return (ArmorStand) this.getBukkitEntity();
+	}
+
+	@Override
+	protected void cn() {}
+
+	@Override
+	public EnumInteractionResult a(EntityHuman entityhuman, Vec3D vec3d, ItemStack itemstack, EnumHand enumhand) {
+		return EnumInteractionResult.PASS;
+	}
+
+	@Override
+	public void g(float f, float f1) {}
+
+	@Override
+	public void U() {
+		this.world.methodProfiler.a("entityBaseTick");
+		
+		if (justCreated) { setFlag(0, false); }
+		
+		this.justCreated = false;
+		this.world.methodProfiler.b();
 	}
 }

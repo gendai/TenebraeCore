@@ -341,16 +341,16 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 	}
 
 	@Override
-	public Map<Item, Integer> getDrops() {
+	public Map<Item, Double> getDrops() {
 		return null;
 	}
 
 	@Override
-	public void setDrops(Map<Item, Integer> drops) {
+	public void setDrops(Map<Item, Double> drops) {
 	}
 
 	@Override
-	public void addDrop(Item drop, int percent) {
+	public void addDrop(Item drop, double percent) {
 	}
 
 	@Override
@@ -415,6 +415,30 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 	@Override
 	public boolean doesCreateFog() {
 		return false;
+	}
+
+	@Override
+	public Entity getTarget() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public double getCriticalChance() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public double getArmor() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public double getMagicalArmor() {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 
 }

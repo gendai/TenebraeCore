@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Random;
 
 import net.minecraft.server.v1_9_R1.Block;
 import net.minecraft.server.v1_9_R1.BlockPosition;
@@ -27,7 +29,6 @@ import net.minecraft.server.v1_9_R1.World;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarFlag;
 import org.bukkit.boss.BossBar;
@@ -45,6 +46,11 @@ import org.bukkit.scheduler.BukkitRunnable;
 import fr.tenebrae.MMOCore.Main;
 import fr.tenebrae.MMOCore.Entities.Pathfinders.PathfinderGoalRandomStroll;
 import fr.tenebrae.MMOCore.Items.Item;
+import fr.tenebrae.MMOCore.Items.ItemRegistry;
+import fr.tenebrae.MMOCore.Items.Coins.CopperCoin;
+import fr.tenebrae.MMOCore.Items.Coins.GoldCoin;
+import fr.tenebrae.MMOCore.Items.Coins.SilverCoin;
+import fr.tenebrae.MMOCore.Mechanics.Damage;
 import fr.tenebrae.MMOCore.Mechanics.Sound;
 import fr.tenebrae.MMOCore.Utils.AnimationAPI;
 import fr.tenebrae.MMOCore.Utils.AnimationAPI.Animation;
@@ -52,18 +58,18 @@ import fr.tenebrae.MMOCore.Utils.NamePlatesAPI;
 
 public class L01MineSpider extends EntityCaveSpider implements ICreature {
 
-	public double health = 16;
-	public double maxHealth = 16;
-	public double attackSpeed = 1000;
+	public double health = 41;
+	public double maxHealth = 41;
+	public double attackSpeed = 1250;
 	public Date lastAttackDate = null;
 	public int atkMin = 1;
 	public int atkMax = 3;
 	public int level = 1;
 	public Map<Entity,Integer> aggroList = new HashMap<Entity,Integer>();
-	public Map<Item,Integer> drops = new HashMap<Item,Integer>();
+	public Map<Item,Double> drops = new HashMap<Item,Double>();
 	public Entity target = null;
 	public Entity lastDamager = null;
-	public int givenXp = 4;
+	public int givenXp = 12;
 	public double attackRange = 1;
 	public String name = "Mine Spider";
 	public Location spawn;
@@ -108,9 +114,9 @@ public class L01MineSpider extends EntityCaveSpider implements ICreature {
 	
 	public void clearGoals() {
 		LinkedHashSet<?> goalB = (LinkedHashSet<?>)Utils.getPrivateField("b", PathfinderGoalSelector.class, goalSelector); goalB.clear();
-        LinkedHashSet<?> goalC = (LinkedHashSet<?>)Utils.getPrivateField("c", PathfinderGoalSelector.class, goalSelector); goalC.clear();
-        LinkedHashSet<?> targetB = (LinkedHashSet<?>)Utils.getPrivateField("b", PathfinderGoalSelector.class, targetSelector); targetB.clear();
-        LinkedHashSet<?> targetC = (LinkedHashSet<?>)Utils.getPrivateField("c", PathfinderGoalSelector.class, targetSelector); targetC.clear();
+		LinkedHashSet<?> goalC = (LinkedHashSet<?>)Utils.getPrivateField("c", PathfinderGoalSelector.class, goalSelector); goalC.clear();
+		LinkedHashSet<?> targetB = (LinkedHashSet<?>)Utils.getPrivateField("b", PathfinderGoalSelector.class, targetSelector); targetB.clear();
+		LinkedHashSet<?> targetC = (LinkedHashSet<?>)Utils.getPrivateField("c", PathfinderGoalSelector.class, targetSelector); targetC.clear();
 	}
 	
 	public void setupGoals() {
@@ -138,8 +144,22 @@ public class L01MineSpider extends EntityCaveSpider implements ICreature {
 		this.setHealth(1.0F);
 		NamePlatesAPI.setName(this, this.name+" §7[§6Lv. "+(this.level < 10 ? "0" : "")+this.level+"§7]§r");
 		this.getAttributeInstance(GenericAttributes.MOVEMENT_SPEED).setValue(walkSpeed);
-		this.bossBar = Bukkit.createBossBar(this.name, BarColor.PURPLE, Utils.getBarStyleByHP((int) this.maxHealth));
+		this.bossBar = Bukkit.createBossBar(this.name, BarColor.RED, Utils.getBarStyleByHP((int) this.maxHealth));
 		this.bossBar.setVisible(true);
+		this.drops.put(ItemRegistry.getItem(8), 5.0);
+		this.drops.put(ItemRegistry.getItem(9), 5.0);
+		this.drops.put(ItemRegistry.getItem(10), 5.0);
+		this.drops.put(ItemRegistry.getItem(11), 5.0);
+		this.drops.put(ItemRegistry.getItem(12), 5.0);
+		this.drops.put(ItemRegistry.getItem(13), 5.0);
+		this.drops.put(ItemRegistry.getItem(14), 5.0);
+		this.drops.put(ItemRegistry.getItem(15), 5.0);
+		this.drops.put(ItemRegistry.getItem(16), 1.0);
+		this.drops.put(ItemRegistry.getItem(17), 1.0);
+		this.drops.put(ItemRegistry.getItem(18), 1.0);
+		this.drops.put(new CopperCoin(new Random().nextInt(5)+1), 100.0);
+		this.drops.put(new SilverCoin(new Random().nextInt(3)+1), 50.0);
+		this.drops.put(new GoldCoin(new Random().nextInt(1)+1), 10.0);
 	}
 
 	@Override
@@ -167,6 +187,11 @@ public class L01MineSpider extends EntityCaveSpider implements ICreature {
 		}
 		this.target = target;
 		this.getControllerLook().a(target, 10.0F, 40F);
+	}
+	
+	@Override
+	public Entity getTarget() {
+		return this.target;
 	}
 	
 	@Override
@@ -211,18 +236,31 @@ public class L01MineSpider extends EntityCaveSpider implements ICreature {
 		if (this.isDead) return;
 		this.getBEntity().addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 100, 10, true, false));
 		this.getBEntity().addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 100, -10, true, false));
-		this.getLocation().getWorld().dropItemNaturally(this.getLocation(), new ItemStack(Material.GOLD_NUGGET));
 		new Sound(this.deathSound, SoundCategory.HOSTILE).setLoc(this.getLocation()).setPitch(1.26F).play();
         this.world.broadcastEntityEffect(this, (byte) 3);
-        if (this.lastDamager instanceof EntityPlayer) ((Player)CraftPlayer.getEntity(this.world.getServer(), this.lastDamager)).giveExp(this.givenXp);
+        if (this.lastDamager instanceof EntityPlayer) Main.connectedCharacters.get(((Player)CraftPlayer.getEntity(this.world.getServer(), this.lastDamager))).addXp(this.givenXp);
         this.isDead = true;
         new BukkitRunnable() {
         	@Override
         	public void run() {
+        		final Location loc = getLocation();
         		dead = true;
         		bossBar.setVisible(false);
+        		if (!drops.isEmpty()) {
+        			for (Entry<Item,Double> entry : drops.entrySet()) {
+        				if ((double)(new Random().nextInt(10000))/100 <= entry.getValue()) {
+        					final ItemStack is = entry.getKey().getItemStack();
+        					new BukkitRunnable() {
+        						@Override
+        						public void run() {
+        							loc.getWorld().dropItemNaturally(loc, is);
+        						}
+        					}.runTask(Main.plugin);
+        				}
+        			}
+        		}
         	}
-        }.runTaskLaterAsynchronously(Main.plugin, 17L);
+        }.runTaskLaterAsynchronously(Main.plugin, 1L);
 	}
 	
 	@Override
@@ -295,8 +333,7 @@ public class L01MineSpider extends EntityCaveSpider implements ICreature {
 				if (this.isAttackReady()) {
 					new Sound(this.attackSound, SoundCategory.HOSTILE).setLoc(this.getLocation()).setPitch(1.26F).play();
 					this.lastAttackDate = new Date();
-					if (target instanceof ICreature) ((ICreature)target).damage(this, Utils.getRandomDamage(this.atkMin, this.atkMax), 1.0D);
-					else if (target instanceof EntityPlayer) ((Player)CraftPlayer.getEntity(target.getWorld().getServer(), target)).damage(Utils.getRandomDamage(this.atkMin, this.atkMax));
+					new Damage(this, target, Utils.getRandomDamage(this.atkMin, this.atkMax), 1.0D).apply();
 				}
 			}
 		}
@@ -327,7 +364,7 @@ public class L01MineSpider extends EntityCaveSpider implements ICreature {
 		this.setTarget(null);
 		this.setResetting(true);
 		this.moveTo(this.spawn, 1.0D);
-		this.getAttributeInstance(GenericAttributes.MOVEMENT_SPEED).setValue(0.47786667640209197000000000000001D);
+		this.getAttributeInstance(GenericAttributes.MOVEMENT_SPEED).setValue(0.37786667640209197000000000000001D);
 	}
 
 	@Override
@@ -341,17 +378,17 @@ public class L01MineSpider extends EntityCaveSpider implements ICreature {
 	}
 
 	@Override
-	public Map<Item, Integer> getDrops() {
+	public Map<Item, Double> getDrops() {
 		return this.drops;
 	}
 	
 	@Override
-	public void setDrops(Map<Item,Integer> drops) {
+	public void setDrops(Map<Item,Double> drops) {
 		this.drops = drops;
 	}
 
 	@Override
-	public void addDrop(Item drop, int percent) {
+	public void addDrop(Item drop, double percent) {
 		if (!drops.containsKey(drop)) drops.put(drop, percent);
 	}
 
@@ -401,5 +438,20 @@ public class L01MineSpider extends EntityCaveSpider implements ICreature {
 	@Override
 	public boolean doesCreateFog() {
 		return this.bossBar.hasFlag(BarFlag.CREATE_FOG);
+	}
+	
+	@Override
+	public double getCriticalChance() {
+		return 7.92D;
+	}
+	
+	@Override
+	public double getArmor() {
+		return 0.0D;
+	}
+	
+	@Override
+	public double getMagicalArmor() {
+		return 0.0D;
 	}
 }

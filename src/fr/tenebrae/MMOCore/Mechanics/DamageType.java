@@ -1,50 +1,44 @@
 package fr.tenebrae.MMOCore.Mechanics;
 
-import net.minecraft.server.v1_9_R1.Entity;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-import org.bukkit.craftbukkit.v1_9_R1.entity.CraftPlayer;
 
-import fr.tenebrae.MMOCore.Characters.Character;
-
-public class DamageType {
+public enum DamageType {
 	
-	public Entity damager;
-	public DamageTypeList type;
+	PLAYER_ATTACK,
+	PLAYER_ATTACK_MAGICAL,
+	PLAYER_SPELL,
+	PLAYER_SPELL_MAGICAL,
+	FALL_DAMAGE,
+	ENVIRONMENT_DAMAGE,
+	ENTITY_ATTACK,
+	ENTITY_SPELL,
+	ENTITY_ATTACK_MAGICAL,
+	ENTITY_SPELL_MAGICAL,
+	OTHER,
+	OTHER_MAGICAL;
 	
-	public DamageType(DamageTypeList type, Entity damager) {
-		this.damager = damager;
-		this.type = type;
+	private static List<DamageType> magical = new ArrayList<DamageType>(Arrays.asList(DamageType.PLAYER_ATTACK_MAGICAL,
+							DamageType.PLAYER_SPELL_MAGICAL,
+							DamageType.ENTITY_ATTACK_MAGICAL,
+							DamageType.ENTITY_SPELL_MAGICAL,
+							DamageType.OTHER_MAGICAL));
+	
+	public static boolean isMagical(DamageType type) {
+		return (magical.contains(type));
 	}
 	
-	public DamageType(DamageTypeList type, Character damager) {
-		this.damager = ((CraftPlayer)damager.getAccount()).getHandle();
-		this.type = type;
+	public static boolean isPhysical(DamageType type) {
+		return !(magical.contains(type));
 	}
 	
-	public DamageType(DamageTypeList type) {
-		this.type = type;
+	public boolean isMagical() {
+		return DamageType.isMagical(this);
 	}
 	
-	public Entity getDamager() {
-		if (type == DamageTypeList.ENTITY_ATTACK || type == DamageTypeList.ENTITY_SPELL || type == DamageTypeList.PLAYER_ATTACK || type == DamageTypeList.PLAYER_SPELL || type == DamageTypeList.ENTITY_ATTACK_MAGICAL || type == DamageTypeList.ENTITY_SPELL_MAGICAL || type == DamageTypeList.PLAYER_ATTACK_MAGICAL || type == DamageTypeList.PLAYER_SPELL_MAGICAL) {
-			return damager;
-		} else {
-			return null;
-		}
-	}
-	
-	public enum DamageTypeList {
-		PLAYER_ATTACK,
-		PLAYER_ATTACK_MAGICAL,
-		PLAYER_SPELL,
-		PLAYER_SPELL_MAGICAL,
-		FALL_DAMAGE,
-		ENVIRONMENT_DAMAGE,
-		ENTITY_ATTACK,
-		ENTITY_SPELL,
-		ENTITY_ATTACK_MAGICAL,
-		ENTITY_SPELL_MAGICAL,
-		OTHER,
-		OTHER_MAGICAL;
+	public boolean isPhysical() {
+		return DamageType.isPhysical(this);
 	}
 }

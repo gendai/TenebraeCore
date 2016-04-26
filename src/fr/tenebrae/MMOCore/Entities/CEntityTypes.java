@@ -9,14 +9,12 @@ import net.minecraft.server.v1_9_R1.BiomeBase.BiomeMeta;
 import net.minecraft.server.v1_9_R1.EntityCaveSpider;
 import net.minecraft.server.v1_9_R1.EntityInsentient;
 import net.minecraft.server.v1_9_R1.EntityTypes;
-import net.minecraft.server.v1_9_R1.EntityVillager;
 
 import org.bukkit.entity.EntityType;
 
 public enum CEntityTypes {
 	
-	L01MineSpider("L01MineSpider", 59, EntityType.SPIDER, EntityCaveSpider.class, L01MineSpider.class),
-	QuestNpc("QuestNpc",120,EntityType.VILLAGER, EntityVillager.class, QuestNpc.class);
+	L01MineSpider("L01MineSpider", 59, EntityType.SPIDER, EntityCaveSpider.class, L01MineSpider.class);
 	
 	private String name;
 	private int id;

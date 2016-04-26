@@ -3,13 +3,15 @@ package fr.tenebrae.MMOCore.Items.Archer;
 import net.minecraft.server.v1_9_R1.NBTTagCompound;
 
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 
+import fr.tenebrae.MMOCore.Items.IEquipableItem;
 import fr.tenebrae.MMOCore.Items.Item;
 import fr.tenebrae.MMOCore.Items.Components.ItemQuality;
 import fr.tenebrae.MMOCore.Items.Components.ItemType;
 import fr.tenebrae.MMOCore.Mechanics.Stats;
 
-public class L01RecruitTunic extends Item {
+public class L01RecruitTunic extends Item implements IEquipableItem {
 
 	public L01RecruitTunic(NBTTagCompound nbt) {
 		super(nbt);
@@ -28,8 +30,13 @@ public class L01RecruitTunic extends Item {
 		this.setLoreId(0);
 		this.setMaterial(Material.LEATHER_CHESTPLATE);
 		this.setDamageData(0);
-		this.addStat(Stats.ARMOR, 2);
+		this.addStat(Stats.ARMOR, 2.0);
 		
 		createItemStack();
+	}
+
+	@Override
+	public void onEquip(Player player) {
+		
 	}
 }
