@@ -19,11 +19,10 @@ public class QuestReward {
 		this.data3 = data3;
 	}
 	
-	public void giveReward(){
+	public void giveReward(Player player){
 		switch(type){
 			case XP:
-				Player p = (Player)data1;
-				p.giveExp((int)data0);
+				player.giveExp((int)data0);
 				break;
 		default:
 			break;

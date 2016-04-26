@@ -1,5 +1,6 @@
 package fr.tenebrae.MMOCore.Quests;
 
+import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 
 public class QuestCondition {
@@ -19,11 +20,10 @@ public class QuestCondition {
 		this.data3 = data3;
 	}
 	
-	public boolean isAuthorize(){
+	public boolean isAuthorize(Player player){
 		switch(type){
 			case LEVEL:
-				Player p = (Player)data1;
-				if((int)data0 == p.getLevel()){
+				if((int)data0 <= player.getLevel() || player.getGameMode().equals(GameMode.CREATIVE)){
 					return true;
 				}else{
 					return false;
