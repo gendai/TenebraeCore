@@ -71,7 +71,7 @@ public class L01MineSpider extends EntityCaveSpider implements ICreature {
 	public Entity lastDamager = null;
 	public int givenXp = 12;
 	public double attackRange = 1;
-	public String name = "Mine Spider";
+	public int nameId = 300000;
 	public Location spawn;
 	public boolean resetting = false;
 	public boolean isDead = false;
@@ -142,9 +142,9 @@ public class L01MineSpider extends EntityCaveSpider implements ICreature {
 	public void setup() {
 		this.health = this.maxHealth;
 		this.setHealth(1.0F);
-		NamePlatesAPI.setName(this, this.name+" §7[§6Lv. "+(this.level < 10 ? "0" : "")+this.level+"§7]§r");
+		NamePlatesAPI.setName(this, ""+this.nameId+"@"+this.level);
 		this.getAttributeInstance(GenericAttributes.MOVEMENT_SPEED).setValue(walkSpeed);
-		this.bossBar = Bukkit.createBossBar(this.name, BarColor.RED, Utils.getBarStyleByHP((int) this.maxHealth));
+		this.bossBar = Bukkit.createBossBar(""+this.nameId, BarColor.RED, Utils.getBarStyleByHP((int) this.maxHealth));
 		this.bossBar.setVisible(true);
 		this.drops.put(ItemRegistry.getItem(8), 5.0);
 		this.drops.put(ItemRegistry.getItem(9), 5.0);
@@ -234,6 +234,11 @@ public class L01MineSpider extends EntityCaveSpider implements ICreature {
 	@Override
 	public void onDeath() {
 		if (this.isDead) return;
+		if (this.target instanceof EntityPlayer) {
+			if (!((Player)(((EntityPlayer)target).getBukkitEntity())).isOnline()) {
+				this.target = null;
+			}
+		}
 		this.getBEntity().addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 100, 10, true, false));
 		this.getBEntity().addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 100, -10, true, false));
 		new Sound(this.deathSound, SoundCategory.HOSTILE).setLoc(this.getLocation()).setPitch(1.26F).play();
