@@ -20,11 +20,10 @@ public class QuestObjective {
 		switch(type){
 			case KILL:
 				KillCounter kc = (KillCounter)data2;
-				if((int)this.data1 == kc.getCount()){
-					return true;
-				}else{
-					return false;
-				}
+				return (int)this.data1 <= kc.getCount();
+			case DISCOVER:
+				DiscoverCoord dc = (DiscoverCoord)data1;
+				return dc.getIsArrived();
 			default:
 				return false;
 		}
