@@ -1,7 +1,7 @@
 package fr.tenebrae.MMOCore.Chat;
 
-import com.google.common.base.Joiner;
-import fr.tenebrae.MMOCore.Utils.StringParser;
+import java.util.Set;
+
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -10,7 +10,10 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 
-import java.util.Set;
+import com.google.common.base.Joiner;
+
+import fr.tenebrae.MMOCore.Main;
+import fr.tenebrae.MMOCore.Utils.StringParser;
 
 public class ChatHandler implements Listener,CommandExecutor {
 
@@ -39,7 +42,7 @@ public class ChatHandler implements Listener,CommandExecutor {
             return false;
         }
         Player player = (Player) sender;
-        String message = Joiner.on("").join(args);
+        String message = Joiner.on(" ").join(args);
         ChatChannel channel;
         if (cmd.getName().equalsIgnoreCase("yell")) {
             channel = manager.getChannel("yell");
@@ -54,8 +57,9 @@ public class ChatHandler implements Listener,CommandExecutor {
     }
 
     public void sendMessage(ChatChannel channel, String message, Player sender) {
+    	if (!Main.connectedCharacters.containsKey(sender)) return;
         Set<Player> recipients = channel.getRecipients(sender.getLocation());
-        message = StringParser.parse(sender, channel.getPattern()).replaceAll("\\{MSG\\}", message);
+        message = StringParser.parse(sender, channel.getPattern()).replaceAll("\\{MSG\\}", message).replaceAll("\\{Player\\}", Main.connectedCharacters.get(sender).getCharacterName());
 
         for (Player player: recipients) {
             player.sendMessage(message);
