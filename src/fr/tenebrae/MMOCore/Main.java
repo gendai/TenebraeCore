@@ -21,7 +21,13 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
+import com.comphenix.packetwrapper.WrapperPlayServerBoss;
+import com.comphenix.packetwrapper.WrapperPlayServerBoss.Action;
 import com.comphenix.packetwrapper.WrapperPlayServerEntityMetadata;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
@@ -29,6 +35,7 @@ import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketEvent;
+import com.comphenix.protocol.wrappers.WrappedChatComponent;
 import com.comphenix.protocol.wrappers.WrappedWatchableObject;
 
 import fr.tenebrae.MMOCore.Characters.Character;
@@ -125,7 +132,8 @@ public class Main extends JavaPlugin {
 	}
 
 	public void initEntitiesTranslator() {
-		protocolManager.addPacketListener(new PacketAdapter(this, ListenerPriority.NORMAL, PacketType.Play.Server.ENTITY_METADATA) {
+		protocolManager.addPacketListener(new PacketAdapter(this, ListenerPriority.NORMAL, PacketType.Play.Server.ENTITY_METADATA, PacketType.Play.Server.BOSS) {
+			@SuppressWarnings("unchecked")
 			@Override
 			public void onPacketSending(PacketEvent evt) {
 				if (evt.getPacketType() == PacketType.Play.Server.ENTITY_METADATA) {
@@ -156,6 +164,45 @@ public class Main extends JavaPlugin {
 					packet.setMetadata(meta);
 					evt.setCancelled(true);
 					((CraftPlayer)evt.getPlayer()).getHandle().playerConnection.sendPacket((Packet<?>) packet.getHandle().getHandle());
+				} else if (evt.getPacketType() == PacketType.Play.Server.BOSS) {
+					WrapperPlayServerBoss packet = new WrapperPlayServerBoss(evt.getPacket().deepClone());
+					if (packet.getAction() == Action.ADD || packet.getAction() == Action.UPDATE_NAME) {
+						WrappedChatComponent chatComp = packet.getTitle();
+						JSONParser parser = new JSONParser();
+						JSONObject json = null;
+						try {
+							json = (JSONObject) parser.parse(chatComp.getJson());
+						} catch (ParseException e) {
+							e.printStackTrace();
+							return;
+						}
+						
+						JSONArray extra = (JSONArray) json.get("extra");
+						JSONObject jsonText = (JSONObject) extra.get(0);
+						String serializedName = (String) jsonText.get("text");
+						
+						String translatedName = "";
+						if (!serializedName.contains("@")) {
+							try {
+								Integer.valueOf(serializedName);
+							} catch (NumberFormatException ee) { return; }
+						}
+						if (serializedName.contains("@")) {
+							String[] splittedName = serializedName.split("@");
+							translatedName = TranslatedString.getString(Integer.valueOf(splittedName[0]), evt.getPlayer());
+							int level = Integer.valueOf(splittedName[1]);
+							translatedName += " §7[§6Lv. "+(level < 10 ? "0"+level : level)+"§7]";
+						} else {
+							translatedName = TranslatedString.getString(Integer.valueOf(serializedName), evt.getPlayer());
+						}
+						jsonText.put("text", translatedName);
+						extra.set(0, jsonText);
+						json.put("extra", extra);
+						chatComp.setJson(json.toJSONString());
+						packet.setTitle(chatComp);
+						evt.setCancelled(true);
+						((CraftPlayer)evt.getPlayer()).getHandle().playerConnection.sendPacket((Packet<?>) packet.getHandle().getHandle());
+					}
 				}
 			}
 		});
