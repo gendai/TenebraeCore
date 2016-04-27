@@ -176,7 +176,7 @@ public class Listeners implements Listener {
 	
 	@EventHandler
 	public void onInteract(PlayerInteractEvent e){
-		if(e.getAction() == Action.RIGHT_CLICK_BLOCK && (e.getClickedBlock().getType() == Material.SIGN_POST || e.getClickedBlock().getType() == Material.WALL_SIGN)){
+		/*if(e.getAction() == Action.RIGHT_CLICK_BLOCK && (e.getClickedBlock().getType() == Material.SIGN_POST || e.getClickedBlock().getType() == Material.WALL_SIGN)){
 			e.setCancelled(true);
 			ItemStack book = new ItemStack(Material.BOOK);
 			ItemMeta meta = book.getItemMeta();
@@ -187,7 +187,7 @@ public class Listeners implements Listener {
 			inv.setItem(13,book);
 
 			e.getPlayer().openInventory(inv);
-		}else if(e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock().getType() == Material.CAULDRON){
+		}else */if(e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock().getType() == Material.CAULDRON){
 			QuestCondition condition = new QuestCondition(ConditionType.LEVEL, (int)1, e.getPlayer(), null, null);
 			KillCounter kc = new KillCounter();
 			QuestObjective obj = new QuestObjective(ObjectiveType.KILL, org.bukkit.craftbukkit.v1_9_R1.entity.CraftZombie.class, (int)1, kc, null);
@@ -266,6 +266,21 @@ public class Listeners implements Listener {
 		return null;
 	}
 
+	private void openQuestDiary(Player player){
+		if(!hasPendingQuests()){
+			player.sendMessage(ChatColor.DARK_AQUA+"You have no quest");
+		}else{
+			Inventory invBooksQuest = Bukkit.createInventory(null, 9*5, ChatColor.GOLD + "Quests List");
+			if(quests.size() > 0){
+				for(Quest q : quests){
+					if(!q.getFinished()){
+						invBooksQuest.addItem(q.getWrittenBook());
+					}
+				}
+			}
+			player.openInventory(invBooksQuest);
+		}
+	}
 
 
 	// GENDAI QUEST EVENTS ---- END
@@ -403,6 +418,9 @@ public class Listeners implements Listener {
 			break;
 		case 30:
 			Main.connectedCharacters.get(p).openBag(4);
+			break;
+		case 57:
+			openQuestDiary(p);
 			break;
 		default:
 			break;
