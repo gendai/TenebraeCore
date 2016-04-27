@@ -176,18 +176,7 @@ public class Listeners implements Listener {
 	
 	@EventHandler
 	public void onInteract(PlayerInteractEvent e){
-		/*if(e.getAction() == Action.RIGHT_CLICK_BLOCK && (e.getClickedBlock().getType() == Material.SIGN_POST || e.getClickedBlock().getType() == Material.WALL_SIGN)){
-			e.setCancelled(true);
-			ItemStack book = new ItemStack(Material.BOOK);
-			ItemMeta meta = book.getItemMeta();
-			meta.setDisplayName(ChatColor.AQUA+"Journal de quêtes");
-			book.setItemMeta(meta);
-
-			Inventory inv = Bukkit.createInventory(null, 27, ChatColor.GOLD + "Quests");
-			inv.setItem(13,book);
-
-			e.getPlayer().openInventory(inv);
-		}else */if(e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock().getType() == Material.CAULDRON){
+		if(e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock().getType() == Material.CAULDRON){
 			QuestCondition condition = new QuestCondition(ConditionType.LEVEL, (int)1, e.getPlayer(), null, null);
 			KillCounter kc = new KillCounter();
 			QuestObjective obj = new QuestObjective(ObjectiveType.KILL, org.bukkit.craftbukkit.v1_9_R1.entity.CraftZombie.class, (int)1, kc, null);
