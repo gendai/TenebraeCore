@@ -4,21 +4,21 @@ import org.bukkit.Location;
 
 public class DiscoverCoord {
 	
-	double x,y,z,radx,radz;
+	double x,y,z,radx,rady;
 	boolean isArrived = false;
 	
-	public DiscoverCoord(double x, double y, double z, double radx, double radz){
+	public DiscoverCoord(double x, double y, double z, double radx, double rady){
 		this.x = x;
 		this.y = y;
 		this.z = z;
 		this.radx = radx;
-		this.radz = radz;
+		this.rady = rady;
 	}
 	
 	public boolean hasReached(Location loc){
 		if(loc.getX() >= (x-radx) && loc.getX() <= (x+radx)
-				&& loc.getY() >= (y-1.0) && loc.getY() <= (y+1.0)
-				&& loc.getZ() >= z-radz && loc.getZ() <= z+radz){
+				&& loc.getY() >= (y-rady) && loc.getY() <= (y+rady)
+				&& loc.getZ() >= z-radx && loc.getZ() <= z+radx){
 			return true;
 		}
 		return false;
@@ -40,8 +40,8 @@ public class DiscoverCoord {
 		return radx;
 	}
 
-	public double getRadz() {
-		return radz;
+	public double getRady() {
+		return rady;
 	}
 	
 	public void setIsArrived(boolean b){
