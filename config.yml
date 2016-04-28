@@ -11,11 +11,6 @@ general:
         pattern: '{Player} >>> {MSG}'
         range: 64
 sql:
-  host:
-  port:
-  database:
-  user:
-  password:
   players_table: players
   item_template: item_template
   quest_template: quest_template
