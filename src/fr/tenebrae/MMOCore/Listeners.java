@@ -101,10 +101,13 @@ public class Listeners implements Listener {
 	public void command(final PlayerCommandPreprocessEvent evt) {
 		String[] args = evt.getMessage().split(" ");
 		if (args[0].equalsIgnoreCase("/spidy")) {
-			new L01MineSpider(evt.getPlayer().getLocation()).spawn();
+			//new L01MineSpider(evt.getPlayer().getLocation()).spawn();
+			SpawnNPC(evt.getPlayer());
 			return;
 		} else if (args[0].equalsIgnoreCase("/spidy2")) {
-			new L02MineBroodMother(evt.getPlayer().getLocation()).spawn();
+			//new L02MineBroodMother(evt.getPlayer().getLocation()).spawn();
+			SpawnNPC(evt.getPlayer());
+			evt.getPlayer().sendMessage("You issued Quest command");
 			return;
 		} else if (args[0].equalsIgnoreCase("/zomby")) {
 			new L10AlphaTestZombie(evt.getPlayer().getLocation()).spawn();
@@ -117,14 +120,17 @@ public class Listeners implements Listener {
 			try {
 				Main.connectedCharacters.get(evt.getPlayer()).addItem(ItemRegistry.getItem(Integer.valueOf(args[1])).getItemStack());
 			} catch (NumberFormatException e) { return; }
+		} else if(args[0].equalsIgnoreCase("/questy")){
+			SpawnNPC(evt.getPlayer());
+			return;
 		}
 	}
 
 	// INDEV PART TEMP COMMANDS ----- END
 
-	
+
 	// GENDAI QUEST EVENTS ---- START
-	
+
 	private Tuple<ArrayList<Quest>,ArrayList<QuestObjective>> entityInQuestKill(org.bukkit.entity.Entity entity){
 		ArrayList<Quest> questsList = new ArrayList<>();
 		ArrayList<QuestObjective> objList = new ArrayList<>();
@@ -140,7 +146,7 @@ public class Listeners implements Listener {
 		}
 		return new Tuple<ArrayList<Quest>, ArrayList<QuestObjective>>(questsList, objList);
 	}
-	
+
 	@EventHandler
 	public void onKillEntity(EntityDeathEvent event){
 		if(event.getEntity().getKiller() instanceof Player){
@@ -190,21 +196,44 @@ public class Listeners implements Listener {
 			}
 		}
 	}
+
+	private void SpawnNPC(Player player){
+		QuestCondition condition = new QuestCondition(ConditionType.LEVEL, (int)1, player, null, null);
+		KillCounter kc = new KillCounter();
+		QuestObjective obj = new QuestObjective(ObjectiveType.KILL, org.bukkit.craftbukkit.v1_9_R1.entity.CraftZombie.class, (int)1, kc, null);
+		QuestReward rew = new QuestReward(RewardType.XP, (int)30, player, null, null);
+		ArrayList<QuestCondition> conditionArr = new ArrayList<>();
+		conditionArr.add(condition);
+		ArrayList<QuestObjective> objArr = new ArrayList<>();
+		objArr.add(obj);
+		ArrayList<QuestReward> rewardArr = new ArrayList<>();
+		rewardArr.add(rew);
+		Quest q = new Quest("Quêtes test","Ceci est une description pour la quête principale", "1", 0, 0, objArr, conditionArr, rewardArr);
+
+		condition = new QuestCondition(ConditionType.LEVEL, (int)5, player, null, null);
+		obj = new QuestObjective(ObjectiveType.DISCOVER, "Test Land", new DiscoverCoord(-198.7, 95, 100.451, 5, 3), null, null);
+		KillCounter killc = new KillCounter();
+		QuestObjective obj2 = new QuestObjective(ObjectiveType.KILL, CraftZombie.class, 3, killc, null);
+		rew = new QuestReward(RewardType.MONEY, (int)20, null, null, null);
+		ArrayList<QuestCondition> conditionArr2 = new ArrayList<>();
+		conditionArr2.add(condition);
+		ArrayList<QuestObjective> objArr2 = new ArrayList<>();
+		objArr2.add(obj);
+		objArr2.add(obj2);
+		ArrayList<QuestReward> rewardArr2 = new ArrayList<>();
+		rewardArr2.add(rew);
+		Quest q2 = new Quest("Quêtes Secondaire","Ceci est une description pour la quête secondaire", "1", 1, 1, objArr2, conditionArr2, rewardArr2);
+		QuestNpc npc = new QuestNpc(player.getLocation());
+		npc.spawn();
+		npc.addQuestNpc(q);
+		npc.addQuestNpc(q2);
+		Bukkit.getServer().getPluginManager().registerEvents(npc, this.plugin);
+		player.sendMessage("Spawned!");
+	}
 	
 	@EventHandler
 	public void onInteract(PlayerInteractEvent e){
-		if(e.getAction() == Action.RIGHT_CLICK_BLOCK && (e.getClickedBlock().getType() == Material.SIGN_POST || e.getClickedBlock().getType() == Material.WALL_SIGN)){
-			e.setCancelled(true);
-			ItemStack book = new ItemStack(Material.BOOK);
-			ItemMeta meta = book.getItemMeta();
-			meta.setDisplayName(ChatColor.AQUA+"Journal de quêtes");
-			book.setItemMeta(meta);
-
-			Inventory inv = Bukkit.createInventory(null, 27, ChatColor.GOLD + "Quests");
-			inv.setItem(13,book);
-
-			e.getPlayer().openInventory(inv);
-		}else if(e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock().getType() == Material.CAULDRON){
+		if(e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock().getType() == Material.CAULDRON){
 			QuestCondition condition = new QuestCondition(ConditionType.LEVEL, (int)1, e.getPlayer(), null, null);
 			KillCounter kc = new KillCounter();
 			QuestObjective obj = new QuestObjective(ObjectiveType.KILL, org.bukkit.craftbukkit.v1_9_R1.entity.CraftZombie.class, (int)1, kc, null);
@@ -237,7 +266,23 @@ public class Listeners implements Listener {
 			Bukkit.getServer().getPluginManager().registerEvents(npc, this.plugin);
 		}
 	}
-	
+
+	private void openQuestDiary(Player player){
+		if(!hasPendingQuests()){
+			player.sendMessage(ChatColor.DARK_AQUA+"You have no quest");
+		}else{
+			Inventory invBooksQuest = Bukkit.createInventory(null, 9*5, ChatColor.GOLD + "Quests List");
+			if(quests.size() > 0){
+				for(Quest q : quests){
+					if(!q.getFinished()){
+						invBooksQuest.addItem(q.getWrittenBook());
+					}
+				}
+			}
+			player.openInventory(invBooksQuest);
+		}
+	}
+
 	private boolean hasPendingQuests(){
 		for(Quest q : quests){
 			if(!q.getFinished()){
@@ -272,7 +317,7 @@ public class Listeners implements Listener {
 			quest.informUpdate((Player)e.getWhoClicked());
 		}
 	}
-	
+
 	public Quest questFromBookMeta(ItemMeta bookMeta){
 		for(Quest q : quests){
 			ItemMeta qmeta = q.getWrittenBook().getItemMeta();
@@ -286,7 +331,7 @@ public class Listeners implements Listener {
 
 
 	// GENDAI QUEST EVENTS ---- END
-	
+
 	@EventHandler
 	public void onUnloadChunk(ChunkUnloadEvent evt) {
 		evt.setCancelled(true);
@@ -302,12 +347,12 @@ public class Listeners implements Listener {
 			}
 		}
 	}
-	
+
 	@EventHandler
 	public void blockplace(BlockPlaceEvent evt) {
 		if (evt.getPlayer().getGameMode() != GameMode.CREATIVE) evt.setCancelled(true);
 	}
-	
+
 	@EventHandler
 	public void blockbreak(BlockBreakEvent evt) {
 		if (evt.getPlayer().getGameMode() != GameMode.CREATIVE) evt.setCancelled(true);
@@ -616,9 +661,9 @@ public class Listeners implements Listener {
 							c.addItem(is);
 							c.equipment.setHelmet(null);
 							inv.setItem(0, new ItemStackBuilder()
-							.withMaterial(Material.BEETROOT)
-							.withDisplayName("§f"+TranslatedString.getString(30000, p))
-							.build());
+									.withMaterial(Material.BEETROOT)
+									.withDisplayName("§f"+TranslatedString.getString(30000, p))
+									.build());
 							return;
 						}
 					}
@@ -636,9 +681,9 @@ public class Listeners implements Listener {
 							c.addItem(is);
 							c.equipment.setNecklace(null);
 							inv.setItem(9, new ItemStackBuilder()
-							.withMaterial(Material.RABBIT_FOOT)
-							.withDisplayName("§f"+TranslatedString.getString(30004, p))
-							.build());
+									.withMaterial(Material.RABBIT_FOOT)
+									.withDisplayName("§f"+TranslatedString.getString(30004, p))
+									.build());
 							return;
 						}
 					}
@@ -656,9 +701,9 @@ public class Listeners implements Listener {
 							c.addItem(is);
 							c.equipment.setChestplate(null);
 							inv.setItem(18, new ItemStackBuilder()
-							.withMaterial(Material.RABBIT_STEW)
-							.withDisplayName("§f"+TranslatedString.getString(30001, p))
-							.build());
+									.withMaterial(Material.RABBIT_STEW)
+									.withDisplayName("§f"+TranslatedString.getString(30001, p))
+									.build());
 							return;
 						}
 					}
@@ -676,9 +721,9 @@ public class Listeners implements Listener {
 							c.addItem(is);
 							c.equipment.setFirstRing(null);
 							inv.setItem(19, new ItemStackBuilder()
-							.withMaterial(Material.BLAZE_POWDER)
-							.withDisplayName("§f"+TranslatedString.getString(30005, p))
-							.build());
+									.withMaterial(Material.BLAZE_POWDER)
+									.withDisplayName("§f"+TranslatedString.getString(30005, p))
+									.build());
 							return;
 						}
 					}
@@ -696,9 +741,9 @@ public class Listeners implements Listener {
 							c.addItem(is);
 							c.equipment.setGloves(null);
 							inv.setItem(27, new ItemStackBuilder()
-							.withMaterial(Material.GOLDEN_CARROT)
-							.withDisplayName("§f"+TranslatedString.getString(30018, p))
-							.build());
+									.withMaterial(Material.GOLDEN_CARROT)
+									.withDisplayName("§f"+TranslatedString.getString(30018, p))
+									.build());
 							return;
 						}
 					}
@@ -716,9 +761,9 @@ public class Listeners implements Listener {
 							c.addItem(is);
 							c.equipment.setSecondRing(null);
 							inv.setItem(28, new ItemStackBuilder()
-							.withMaterial(Material.BLAZE_POWDER)
-							.withDisplayName("§f"+TranslatedString.getString(30005, p))
-							.build());
+									.withMaterial(Material.BLAZE_POWDER)
+									.withDisplayName("§f"+TranslatedString.getString(30005, p))
+									.build());
 							return;
 						}
 					}
@@ -736,9 +781,9 @@ public class Listeners implements Listener {
 							c.addItem(is);
 							c.equipment.setLeggings(null);
 							inv.setItem(36, new ItemStackBuilder()
-							.withMaterial(Material.GHAST_TEAR)
-							.withDisplayName("§f"+TranslatedString.getString(30002, p))
-							.build());
+									.withMaterial(Material.GHAST_TEAR)
+									.withDisplayName("§f"+TranslatedString.getString(30002, p))
+									.build());
 							return;
 						}
 					}
@@ -756,9 +801,9 @@ public class Listeners implements Listener {
 							c.addItem(is);
 							c.equipment.setBoots(null);
 							inv.setItem(45, new ItemStackBuilder()
-							.withMaterial(Material.NETHER_STALK)
-							.withDisplayName("§f"+TranslatedString.getString(30003, p))
-							.build());
+									.withMaterial(Material.NETHER_STALK)
+									.withDisplayName("§f"+TranslatedString.getString(30003, p))
+									.build());
 							return;
 						}
 					}
@@ -776,9 +821,9 @@ public class Listeners implements Listener {
 							c.addItem(is);
 							c.equipment.setWeapon(null);
 							inv.setItem(47, new ItemStackBuilder()
-							.withMaterial(Material.DIAMOND_SWORD)
-							.withDisplayName("§f"+TranslatedString.getString(30019, p))
-							.build());
+									.withMaterial(Material.DIAMOND_SWORD)
+									.withDisplayName("§f"+TranslatedString.getString(30019, p))
+									.build());
 							return;
 						}
 					}
@@ -796,9 +841,9 @@ public class Listeners implements Listener {
 							c.addItem(is);
 							c.equipment.setOffhand(null);
 							inv.setItem(48, new ItemStackBuilder()
-							.withMaterial(Material.DIAMOND_HOE)
-							.withDisplayName("§f"+TranslatedString.getString(30019, p))
-							.build());
+									.withMaterial(Material.DIAMOND_HOE)
+									.withDisplayName("§f"+TranslatedString.getString(30019, p))
+									.build());
 							return;
 						}
 					}
@@ -806,6 +851,9 @@ public class Listeners implements Listener {
 					return;
 				}
 			}
+			break;
+		case 57:
+			openQuestDiary(p);
 			break;
 		case 59:
 			if (inv.getItem(slot).getType() == Material.LEATHER) {
@@ -932,11 +980,11 @@ public class Listeners implements Listener {
 			}
 		}
 	}
-	
-	
-	
+
+
+
 	// ENTITY EFFECTS LAUNCH
-	
+
 	@EventHandler
 	public void onEntityClick(PlayerInteractEntityEvent e){
 		Player player = e.getPlayer();
