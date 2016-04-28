@@ -23,6 +23,7 @@ import com.gmail.filoghost.holographicdisplays.api.line.TextLine;
 import fr.tenebrae.MMOCore.Main;
 import fr.tenebrae.MMOCore.SQLResultSet;
 import fr.tenebrae.MMOCore.Mechanics.MMOClass;
+import fr.tenebrae.MMOCore.Utils.NicknameAPI;
 import fr.tenebrae.MMOCore.Utils.SQLHelper;
 import fr.tenebrae.PlayerLanguage.LanguageAPI;
 
@@ -72,7 +73,7 @@ public class LoginScreen {
 		new BukkitRunnable() {
 			@Override
 			public void run() {
-				NickNamerAPI.getNickManager().setNick(p.getUniqueId(), p.getName());
+				NicknameAPI.applyNick(p, p.getName());
 			}
 		}.runTaskLaterAsynchronously(Main.plugin, 20L);
 		
@@ -177,7 +178,7 @@ public class LoginScreen {
 		new BukkitRunnable() {
 			@Override
 			public void run() {
-				NickNamerAPI.getNickManager().setNick(p.getUniqueId(), selectedChar);
+				NicknameAPI.applyNick(p, selectedChar);
 			}
 		}.runTaskLaterAsynchronously(Main.plugin, 20L);
 	}
