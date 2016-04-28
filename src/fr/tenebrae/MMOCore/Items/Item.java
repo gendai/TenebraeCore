@@ -3,6 +3,7 @@ package fr.tenebrae.MMOCore.Items;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,9 +39,9 @@ import fr.tenebrae.MMOCore.Utils.Serializers.ItemStackSerializer;
 public class Item {
 
 	private NBTTagCompound nbt, mmoNBT;
-	
+
 	private int id = 0;
-	
+
 	private Material material = null;
 	private int damageData = 0;
 	private ItemType type = null;
@@ -51,26 +52,28 @@ public class Item {
 	private List<GemSlot> gemSlots = new ArrayList<GemSlot>();
 	private int nameId = 0;
 	private int loreId = 0;
-	
+
+	private String locale = "english";
+
 	private int minDmg = 0;
 	private int maxDmg = 0;
-	
+
 	private int sellPrice = 0;
-	
+
 	private int amount = 1;
 	private int durability = 0;
 	private int maxDurability = 0;
-	
+
 	private int slots = 0;
 	private Map<TriggerType, Spells> linkedSpells = new HashMap<TriggerType, Spells>();
 	private List<Spells> learnSpells = new ArrayList<Spells>();
-	
+
 	private WeaponPlace weaponPlace = null;
 	private WeaponType weaponType = null;
-	
+
 	private net.minecraft.server.v1_9_R1.ItemStack itemStack = null;
-	
-	
+
+
 	public Item() {
 		this.itemStack = new net.minecraft.server.v1_9_R1.ItemStack(net.minecraft.server.v1_9_R1.Item.REGISTRY.get(new MinecraftKey("minecraft:stone")));
 		this.setAmount(1);
@@ -87,20 +90,20 @@ public class Item {
 		this.setDamageData(0);
 		this.setSellPrice(1);
 	}
-	
+
 	public Item(NBTTagCompound nbt) {
 		setInfosFrom(nbt);
-		
+
 		createItemStack();
 	}
-	
+
 	public Item(ItemStack is) {
 		this.itemStack = ItemUtils.asNMS(is);
 		NBTTagCompound nbt = new NBTTagCompound();
 		this.itemStack.save(nbt);
 		setInfosFrom(nbt);
 	}
-	
+
 	public Item(ItemStack is, boolean emergency) {
 		if (!emergency) {
 			this.itemStack = ItemUtils.asNMS(is);
@@ -116,7 +119,7 @@ public class Item {
 			setInfosFrom(nbt);
 		}
 	}
-	
+
 	public NBTTagCompound setInfosOn(NBTTagCompound nbt) {
 		ItemStack returned = new ItemStack(material);
 		returned.setAmount(amount);
@@ -127,6 +130,7 @@ public class Item {
 		mmoNBT.setInt("levelRequired", this.getLevelRequired());
 		mmoNBT.setString("itemType", this.getType().toString());
 		mmoNBT.setString("itemQuality", this.getQuality().toString());
+		mmoNBT.setString("locale", this.getLocale());
 		mmoNBT.setInt("id", this.getId());
 		mmoNBT.setInt("nameId", this.getNameId());
 		mmoNBT.setInt("loreId", this.getLoreId());
@@ -138,7 +142,7 @@ public class Item {
 		if (weaponType != null) mmoNBT.setString("weaponType", weaponType.toString());
 		if (sellPrice > 0) mmoNBT.setInt("sellPrice", this.getSellPrice());
 		if (slots > 0) mmoNBT.setInt("slots", this.getSlots());
-		
+
 		if (!stats.isEmpty()) {
 			NBTTagList statsList = new NBTTagList();
 			for (Entry<Stats, Double> entry : stats.entrySet()) {
@@ -180,7 +184,7 @@ public class Item {
 		nbt.set("tag", tag);
 		return nbt;
 	}
-	
+
 	public Item setInfosFrom(NBTTagCompound nbt) {
 		stats.clear();
 		gemSlots.clear();
@@ -202,6 +206,7 @@ public class Item {
 			this.setLevelRequired(mmoNBT.getInt("levelRequired"));
 			this.setType(ItemType.valueOf(mmoNBT.getString("itemType")));
 			this.setQuality(ItemQuality.valueOf(mmoNBT.getString("itemQuality")));
+			this.setLocale(mmoNBT.getString("locale"));
 			this.setId(mmoNBT.getInt("id"));
 			this.setNameId(mmoNBT.getInt("nameId"));
 			this.setLoreId(mmoNBT.getInt("loreId"));
@@ -256,86 +261,93 @@ public class Item {
 		}
 		return this;
 	}
-	
+
 	public Material getMaterial() {
 		return material;
 	}
-	
+
 	public void setMaterial(Material material) {
 		this.material = material;
 	}
-	
+
 	public ItemType getType() {
 		return type;
 	}
-	
+
 	public void setType(ItemType type) {
 		this.type = type;
 	}
-	
+
 	public ItemQuality getQuality() {
 		return quality;
 	}
-	
+
 	public void setQuality(ItemQuality quality) {
 		this.quality = quality;
 	}
-	
+
 	public Map<Stats, Double> getStats() {
 		return stats;
 	}
-	
+
 	public void setStats(Map<Stats, Double> stats) {
 		this.stats = stats;
 	}
-	
+
 	public int getItemLevel() {
 		return itemLevel;
 	}
-	
+
 	public void setItemLevel(int itemLevel) {
 		this.itemLevel = itemLevel;
 	}
-	
+
 	public int getLevelRequired() {
 		return levelRequired;
 	}
-	
+
 	public void setLevelRequired(int levelRequired) {
 		this.levelRequired = levelRequired;
 	}
-	
+
 	public List<GemSlot> getGemSlots() {
 		return gemSlots;
 	}
-	
+
 	public void setGemSlots(List<GemSlot> gemSlots) {
 		this.gemSlots = gemSlots;
 	}
-	
+
 	public int getNameId() {
 		return nameId;
 	}
-	
+
 	public String getName(String language) {
 		String returned = "null";
+		SQLResultSet sqlRS = null;
 		try {
-			SQLResultSet sqlRS = SQLHelper.getSortedEntrys(Main.DB_DATABASE, Main.DB_STRING_TEMPLATE, "entry", nameId);
+			sqlRS = SQLHelper.getSortedEntrys(Main.DB_DATABASE, Main.DB_STRING_TEMPLATE, "entry", nameId);
 			ResultSet nameRow = sqlRS.getResultSet();
 			if (!nameRow.next()) throw new SQLException("String template did not contained the requested entry ("+nameId+")");
 			if (nameRow.isAfterLast()) throw new SQLException("String template did not contained the requested entry ("+nameId+")");
 			returned = nameRow.getString(language);
 			sqlRS.close();
-		} catch (Exception e) { e.printStackTrace(); }
+		} catch (Exception e) {
+			try {
+				if (sqlRS != null) sqlRS.close();
+			} catch (SQLException s) {}
+			e.printStackTrace();
+		}
 		if (returned == null) returned = "null";
 		return returned;
 	}
-	
+
 	public List<String> getLore(String language) {
 		List<String> returned = new ArrayList<String>();
-		
+
+		SQLResultSet sqlRS = null;
 		try {
-			SQLResultSet sqlRS = SQLHelper.getSortedEntrys(Main.DB_DATABASE, Main.DB_STRING_TEMPLATE, "entry", loreId);
+			sqlRS = SQLHelper.getSortedEntrys(Main.DB_DATABASE, Main.DB_STRING_TEMPLATE, "entry", loreId);
 			ResultSet loreRow = sqlRS.getResultSet();
 			if (!loreRow.next()) throw new SQLException("String template did not contained the requested entry ("+loreId+")");
 			if (loreRow.isAfterLast()) throw new SQLException("String template did not contained the requested entry ("+loreId+")");
@@ -346,79 +358,84 @@ public class Item {
 			}
 			returned.add(value);
 			sqlRS.close();
-		} catch (Exception e) { e.printStackTrace(); }
-		
+		} catch (Exception e) { 
+			try {
+				if (sqlRS != null) sqlRS.close();
+			} catch (SQLException s) {}
+			e.printStackTrace();
+		}
+
 		return returned;
 	}
-	
+
 	public void setNameId(int nameId) {
 		this.nameId = nameId;
 	}
-	
+
 	public int getLoreId() {
 		return loreId;
 	}
-	
+
 	public void setLoreId(int loreId) {
 		this.loreId = loreId;
 	}
-	
+
 	public int getAmount() {
 		return amount;
 	}
-	
+
 	public void setAmount(int amount) {
 		this.amount = amount;
 	}
-	
+
 	public int getDurability() {
 		return durability;
 	}
-	
+
 	public void setDurability(int durability) {
 		this.durability = durability;
 	}
-	
+
 	public int getSlots() {
 		return slots;
 	}
-	
+
 	public void setSlots(int slots) {
 		this.slots = slots;
 	}
-	
+
 	public Map<TriggerType, Spells> getLinkedSpells() {
 		return linkedSpells;
 	}
-	
+
 	public void setLinkedSpells(Map<TriggerType, Spells> linkedSpells) {
 		this.linkedSpells = linkedSpells;
 	}
-	
+
 	public void addLinkedSpell(TriggerType trigger, Spells spell) {
 		this.linkedSpells.put(trigger, spell);
 	}
-	
+
 	public List<Spells> getLearnSpells() {
 		return learnSpells;
 	}
-	
+
 	public void setLearnSpells(List<Spells> learnSpells) {
 		this.learnSpells = learnSpells;
 	}
-	
+
 	public NBTTagCompound getNBT() {
 		return nbt;
 	}
-	
+
 	public void setNBT(NBTTagCompound nbt) {
 		this.nbt = nbt;
 	}
-	
+
 	public NBTTagCompound getMmoNBT() {
 		return mmoNBT;
 	}
-	
+
 	public void setMmoNBT(NBTTagCompound mmoNBT) {
 		this.mmoNBT = mmoNBT;
 	}
@@ -438,10 +455,10 @@ public class Item {
 	public void setSellPrice(int sellPrice) {
 		this.sellPrice = sellPrice;
 	}
-	
+
 	public List<String> buildLore(String language) {
 		List<String> returned = new ArrayList<String>();
-		
+
 		returned.add("§r");
 		returned.add("§7"+(this.getWeaponType() != null ? this.getWeaponType().getString(language) : this.getType().getString(language)));
 		if (this.getLevelRequired() > 0) returned.add("§7"+getLocaleString(40000, language)+"§6"+this.getLevelRequired());
@@ -473,7 +490,7 @@ public class Item {
 			}
 			returned.add("§r");
 		}
-		returned.add("§3"+getLocaleString(40002, language)+"§a"+this.getDurability()+"§3/§f"+this.getMaxDurability());
+		if (this.getMaxDurability() > 0) returned.add("§3"+getLocaleString(40002, language)+"§a"+this.getDurability()+"§3/§f"+this.getMaxDurability());
 		returned.add("§3"+getLocaleString(40003, language)+getFormattedPrice(this.getSellPrice()));
 		if (this.loreId != 0) {
 			returned.add("§r");
@@ -481,7 +498,7 @@ public class Item {
 		}
 		return returned;
 	}
-	
+
 	public String getFormattedPrice(int amount) {
 		String returned = "§f";
 		if (amount > 10000) {
@@ -498,7 +515,7 @@ public class Item {
 		}
 		return returned;
 	}
-	
+
 	public String getLocaleString(int id, String language) {
 		String returned = "null";
 		try {
@@ -512,11 +529,11 @@ public class Item {
 		if (returned == null) returned = "null";
 		return returned;
 	}
-	
+
 	public void updateItemStack(Character c) {
 		this.updateItemStack(c.getLanguage());
 	}
-	
+
 	public void updateItemStack(final String language) {
 		new BukkitRunnable() {
 			@Override
@@ -529,17 +546,34 @@ public class Item {
 				meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_DESTROYS, ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_PLACED_ON, ItemFlag.HIDE_POTION_EFFECTS, ItemFlag.HIDE_UNBREAKABLE);
 				CraftItemStack.setItemMeta(itemStack, meta);
 				NBTTagCompound itemNBT = new NBTTagCompound();
-				itemStack.save(itemNBT);
+				try {
+					itemStack.save(itemNBT);
+				} catch (ConcurrentModificationException e) {
+					Main.log.warning("Error attempting to save vanilla informations on a NBTTag (Attempt 1). MMOItem ID: "+getId());
+					try {
+						itemStack.save(itemNBT);
+					} catch (ConcurrentModificationException e1) {
+						Main.log.warning("Error attempting to save vanilla informations on a NBTTag (Attempt 2). MMOItem ID: "+getId());
+						try {
+							itemStack.save(itemNBT);
+						} catch (ConcurrentModificationException e2) {
+							Main.log.warning("Error attempting to save vanilla informations on a NBTTag (Attempt 3). MMOItem ID: "+getId());
+							Main.log.severe("Attention: an item could not set his informations on a NBTTag. MMOItem ID: "+getId());
+						}
+					}
+				}
 				setInfosOn(itemNBT);
 				itemStack.c(itemNBT);
 				int result = 0;
-				result = (getDurability() * itemStack.getItem().getMaxDurability())/getMaxDurability();
-				result = itemStack.getItem().getMaxDurability() - result;
+				if (getMaxDurability() > 0) {
+					result = (getDurability() * itemStack.getItem().getMaxDurability())/getMaxDurability();
+					result = itemStack.getItem().getMaxDurability() - result;
+				}
 				itemStack.setData(Math.round(result));
 			}
 		}.runTaskAsynchronously(Main.plugin);
 	}
-	
+
 	protected void createItemStack() {
 		ItemStack returned = new ItemStack(material);
 		returned.setAmount(amount);
@@ -555,15 +589,17 @@ public class Item {
 		setInfosOn(itemNBT);
 		itemStack.c(itemNBT);
 		int result = 0;
-		result = (getDurability() * itemStack.getItem().getMaxDurability())/getMaxDurability();
-		result = itemStack.getItem().getMaxDurability() - result;
+		if (getMaxDurability() > 0) {
+			result = (getDurability() * itemStack.getItem().getMaxDurability())/getMaxDurability();
+			result = itemStack.getItem().getMaxDurability() - result;
+		}
 		itemStack.setData(Math.round(result));
 	}
-	
+
 	public ItemStack getItemStack() {
 		return CraftItemStack.asBukkitCopy(this.itemStack);
 	}
-	
+
 	public net.minecraft.server.v1_9_R1.ItemStack getNMSItemStack() {
 		return this.itemStack;
 	}
@@ -599,11 +635,11 @@ public class Item {
 	public void setMaxDurability(int maxDurability) {
 		this.maxDurability = maxDurability;
 	}
-	
+
 	public void addStat(Stats stat, Double amount) {
 		this.stats.put(stat, amount);
 	}
-	
+
 	public void removeStat(Stats stat) {
 		this.stats.remove(stat);
 	}
@@ -623,7 +659,7 @@ public class Item {
 	public void setMaxDmg(int maxDmg) {
 		this.maxDmg = maxDmg;
 	}
-	
+
 	public boolean instanceOf(Class<? extends Item> clazz) {
 		try {
 			if (clazz.newInstance().getId() == this.getId()) return true;
@@ -633,9 +669,20 @@ public class Item {
 			return false;
 		}
 	}
-	
+
 	@Override
 	public String toString() {
 		return ItemStackSerializer.toBase64(getItemStack());
+	}
+
+	public String getLocale() {
+		return locale;
+	}
+
+	public Item setLocale(String locale) {
+		if (this.locale.equals(locale)) return this;
+		this.locale = locale;
+		updateItemStack(locale);
+		return this;
 	}
 }

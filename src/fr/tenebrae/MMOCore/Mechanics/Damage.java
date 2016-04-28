@@ -103,7 +103,6 @@ public class Damage {
 			if (damager == null) return;
 			if (target == null) return;
 			if (damager instanceof Character) {
-				Main.log.info("Damager is character");
 				Character c = (Character)damager;
 				Stats usedStat = Stats.STRENGTH;
 				Stats powerStat = Stats.POWER;
@@ -118,7 +117,6 @@ public class Damage {
 					damage *= Math.min(((double)(new Random().nextInt(100))/100)+1.5, 2.25);
 				}
 			} else if (damager instanceof ICreature) {
-				Main.log.info("Damager is creature");
 				ICreature c = (ICreature)damager;
 				if ((double)(new Random().nextInt(10000))/100 <= c.getCriticalChance()) {
 					this.isCritical = true;
@@ -127,18 +125,14 @@ public class Damage {
 			}
 
 			if (target instanceof Character) {
-				Main.log.info("Target is character");
 				Character c = (Character)target;
 				Stats defStat = Stats.ARMOR;
 				if (type.isMagical()) defStat = Stats.MAGICAL_ARMOR;
 
 				double reducPercent = c.getStat(defStat);
-				Main.log.info("Reduction Percent is "+reducPercent);
-				Main.log.info("Damage before is "+damage);
 
 				damage = (int) (damage - ((damage*reducPercent)/100));
 				if (damage < 0) damage = 0;
-				Main.log.info("Damage after is "+damage);
 
 				c.damage((damager instanceof Character ? ((Character)damager).getNMSAccount() : (Entity)damager), damage);
 				new DamageIndicator(c.getNMSAccount(), damage, this.isCritical()).spawn();
@@ -150,18 +144,14 @@ public class Damage {
 					}
 				}
 			} else if (target instanceof EntityPlayer) {
-				Main.log.info("Target is entityplayer");
 				Character c = Main.connectedCharacters.get(((Player)CraftPlayer.getEntity(((EntityPlayer)target).getWorld().getServer(), ((EntityPlayer)target))));
 				Stats defStat = Stats.ARMOR;
 				if (type.isMagical()) defStat = Stats.MAGICAL_ARMOR;
 
 				double reducPercent = c.getStat(defStat);
-				Main.log.info("Reduction Percent is "+reducPercent);
-				Main.log.info("Damage before is "+damage);
 
 				damage = (int) (damage - ((damage*reducPercent)/100));
 				if (damage < 0) damage = 0;
-				Main.log.info("Damage after is "+damage);
 
 				c.damage((damager instanceof Character ? ((Character)damager).getNMSAccount() : (Entity)damager), damage);
 				new DamageIndicator(c.getNMSAccount(), damage, this.isCritical()).spawn();
@@ -173,18 +163,14 @@ public class Damage {
 					}
 				}
 			} else if (target instanceof Player) {
-				Main.log.info("Target is player");
 				Character c = Main.connectedCharacters.get(((Player)target));
 				Stats defStat = Stats.ARMOR;
 				if (type.isMagical()) defStat = Stats.MAGICAL_ARMOR;
 
 				double reducPercent = c.getStat(defStat);
-				Main.log.info("Reduction Percent is "+reducPercent);
-				Main.log.info("Damage before is "+damage);
 
 				damage = (int) (damage - ((damage*reducPercent)/100));
 				if (damage < 0) damage = 0;
-				Main.log.info("Damage after is "+damage);
 
 				c.damage((damager instanceof Character ? ((Character)damager).getNMSAccount() : (Entity)damager), damage);
 				new DamageIndicator(c.getNMSAccount(), damage, this.isCritical()).spawn();
@@ -196,14 +182,10 @@ public class Damage {
 					}
 				}
 			} else if (target instanceof ICreature) {
-				Main.log.info("Target is creature");
 				ICreature c = (ICreature)target;
 				double reducPercent = (type.isMagical() ? c.getMagicalArmor() : c.getArmor());
-				Main.log.info("Reduction Percent is "+reducPercent);
-				Main.log.info("Damage before is "+damage);
 				damage = (int) (damage - ((damage*reducPercent)/100));
 				if (damage < 0) damage = 0;
-				Main.log.info("Damage after is "+damage);
 
 				c.damage((damager instanceof Character ? ((Character)damager).getNMSAccount() : (Entity)damager), damage, aggroMultiplier);
 				new DamageIndicator((Entity)c, damage, this.isCritical()).spawn();
@@ -257,7 +239,7 @@ class DamageIndicator extends EntityArmorStand {
 		this.setInvisible(true);
 		this.setGravity(false);
 		this.setMarker(true);
-		this.setCustomName("§"+(damage > 0 ? "c-" : "6-")+damage);
+		this.setCustomName("§"+(damage > 0 ? "c" : "6")+(critical ? "§l" : "")+"-"+damage+(critical ? "!" : ""));
 		this.setCustomNameVisible(true);
 	}
 
@@ -286,7 +268,6 @@ class DamageIndicator extends EntityArmorStand {
 		}
 
 		this.world.methodProfiler.a("entityBaseTick");
-
 		if (justCreated) { setFlag(0, false); }
 
 		this.justCreated = false;

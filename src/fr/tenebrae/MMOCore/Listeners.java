@@ -11,16 +11,20 @@ import net.minecraft.server.v1_9_R1.Tuple;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.craftbukkit.v1_9_R1.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_9_R1.entity.CraftZombie;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -42,6 +46,7 @@ import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -51,8 +56,11 @@ import fr.tenebrae.MMOCore.Bags.Bag;
 import fr.tenebrae.MMOCore.Characters.Character;
 import fr.tenebrae.MMOCore.Entities.IClickable;
 import fr.tenebrae.MMOCore.Entities.ICreature;
-import fr.tenebrae.MMOCore.Entities.L01MineSpider;
 import fr.tenebrae.MMOCore.Entities.QuestNpc;
+import fr.tenebrae.MMOCore.Entities.MMOEntities.L01MineSpider;
+import fr.tenebrae.MMOCore.Entities.MMOEntities.L02MineBroodMother;
+import fr.tenebrae.MMOCore.Entities.MMOEntities.L10AlphaTestZombie;
+import fr.tenebrae.MMOCore.Entities.MMOEntities.L17NivlasSpider;
 import fr.tenebrae.MMOCore.Items.IClickableItem;
 import fr.tenebrae.MMOCore.Items.IUsableItem;
 import fr.tenebrae.MMOCore.Items.Item;
@@ -94,6 +102,15 @@ public class Listeners implements Listener {
 		String[] args = evt.getMessage().split(" ");
 		if (args[0].equalsIgnoreCase("/spidy")) {
 			new L01MineSpider(evt.getPlayer().getLocation()).spawn();
+			return;
+		} else if (args[0].equalsIgnoreCase("/spidy2")) {
+			new L02MineBroodMother(evt.getPlayer().getLocation()).spawn();
+			return;
+		} else if (args[0].equalsIgnoreCase("/zomby")) {
+			new L10AlphaTestZombie(evt.getPlayer().getLocation()).spawn();
+			return;
+		} else if (args[0].equalsIgnoreCase("/spidy3")) {
+			new L17NivlasSpider(evt.getPlayer().getLocation()).spawn();
 			return;
 		} else if (args[0].equalsIgnoreCase("/getitem")) {
 			if (args.length == 1) return;
@@ -176,7 +193,18 @@ public class Listeners implements Listener {
 	
 	@EventHandler
 	public void onInteract(PlayerInteractEvent e){
-		if(e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock().getType() == Material.CAULDRON){
+		if(e.getAction() == Action.RIGHT_CLICK_BLOCK && (e.getClickedBlock().getType() == Material.SIGN_POST || e.getClickedBlock().getType() == Material.WALL_SIGN)){
+			e.setCancelled(true);
+			ItemStack book = new ItemStack(Material.BOOK);
+			ItemMeta meta = book.getItemMeta();
+			meta.setDisplayName(ChatColor.AQUA+"Journal de quêtes");
+			book.setItemMeta(meta);
+
+			Inventory inv = Bukkit.createInventory(null, 27, ChatColor.GOLD + "Quests");
+			inv.setItem(13,book);
+
+			e.getPlayer().openInventory(inv);
+		}else if(e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock().getType() == Material.CAULDRON){
 			QuestCondition condition = new QuestCondition(ConditionType.LEVEL, (int)1, e.getPlayer(), null, null);
 			KillCounter kc = new KillCounter();
 			QuestObjective obj = new QuestObjective(ObjectiveType.KILL, org.bukkit.craftbukkit.v1_9_R1.entity.CraftZombie.class, (int)1, kc, null);
@@ -255,21 +283,6 @@ public class Listeners implements Listener {
 		return null;
 	}
 
-	private void openQuestDiary(Player player){
-		if(!hasPendingQuests()){
-			player.sendMessage(ChatColor.DARK_AQUA+"You have no quest");
-		}else{
-			Inventory invBooksQuest = Bukkit.createInventory(null, 9*5, ChatColor.GOLD + "Quests List");
-			if(quests.size() > 0){
-				for(Quest q : quests){
-					if(!q.getFinished()){
-						invBooksQuest.addItem(q.getWrittenBook());
-					}
-				}
-			}
-			player.openInventory(invBooksQuest);
-		}
-	}
 
 
 	// GENDAI QUEST EVENTS ---- END
@@ -288,6 +301,16 @@ public class Listeners implements Listener {
 
 			}
 		}
+	}
+	
+	@EventHandler
+	public void blockplace(BlockPlaceEvent evt) {
+		if (evt.getPlayer().getGameMode() != GameMode.CREATIVE) evt.setCancelled(true);
+	}
+	
+	@EventHandler
+	public void blockbreak(BlockBreakEvent evt) {
+		if (evt.getPlayer().getGameMode() != GameMode.CREATIVE) evt.setCancelled(true);
 	}
 
 	@EventHandler
@@ -320,6 +343,8 @@ public class Listeners implements Listener {
 
 		if (((CraftEntity)evt.getEntity()).getHandle() instanceof ICreature) {
 			damager.lastAttackDate = new Date();
+			damager.lastDamagedDate = new Date();
+			damager.setInFight(true);
 			damage.apply();
 		} else if (evt.getEntity() instanceof Player) {
 			((Player)evt.getDamager()).sendMessage("§4* §cLe système de PK est en cours de développement.");
@@ -366,9 +391,9 @@ public class Listeners implements Listener {
 		p.setMaxHealth(20.0D);
 		p.setHealth(20.0D);
 
-		if (CharacterCreator.creatingPlayers.containsKey(p)) {
-			HandlerList.unregisterAll(CharacterCreator.creatingPlayers.get(p));
-			CharacterCreator.creatingPlayers.remove(p);
+		if (CharacterCreator.creatingPlayers.containsKey(p.getName())) {
+			HandlerList.unregisterAll(CharacterCreator.creatingPlayers.get(p.getName()));
+			CharacterCreator.creatingPlayers.remove(p.getName());
 		}
 		if (LoginScreen.loggingPlayers.containsKey(p)) {
 			LoginScreen ls = LoginScreen.loggingPlayers.get(p);
@@ -408,9 +433,6 @@ public class Listeners implements Listener {
 		case 30:
 			Main.connectedCharacters.get(p).openBag(4);
 			break;
-		case 57:
-			openQuestDiary(p);
-			break;
 		default:
 			break;
 		}
@@ -427,7 +449,11 @@ public class Listeners implements Listener {
 
 		ItemStack[] newBagContent = new ItemStack[inv.getSize()-9];
 		for (int k = 0; k < inv.getSize()-9; k++) {
-			newBagContent[k] = inv.getItem(k);
+			ItemStack is = inv.getItem(k);
+			if (is != null) {
+				if (is.getType() == Material.STAINED_GLASS_PANE && is.getDurability() == 7) {}
+				else newBagContent[k] = inv.getItem(k);
+			} else newBagContent[k] = inv.getItem(k);
 		}
 		Main.connectedCharacters.get(p).bags.get(openedBagNumber-1).setItems(newBagContent);
 	}
@@ -438,7 +464,7 @@ public class Listeners implements Listener {
 		if (!(evt.getWhoClicked() instanceof Player)) return;
 		Player p = (Player) evt.getWhoClicked();
 		if (!evt.getClickedInventory().getName().contains(TranslatedString.getString(70102, p))) return;
-		evt.setCancelled(true);
+		evt.setCancelled(false);
 		int slot = evt.getRawSlot();
 		Inventory inv = evt.getClickedInventory();
 		if (inv.getItem(slot) == null) return;
@@ -461,7 +487,6 @@ public class Listeners implements Listener {
 			Main.connectedCharacters.get(p).openBag(openedBagNumber+1);
 			return;
 		}
-		evt.setCancelled(false);
 	}
 
 	@EventHandler
@@ -488,36 +513,42 @@ public class Listeners implements Listener {
 						oldItem = c.equipment.getBoots();
 						c.removeItem(inv.getItem(slot));
 						inv.setItem(slot, oldItem == null ? null : oldItem.getItemStack());
+						if (oldItem != null) c.addItem(oldItem.getItemStack());
 						c.equipment.setBoots(item);
 						break;
 					case CHESTPLATE:
 						oldItem = c.equipment.getChestplate();
 						c.removeItem(inv.getItem(slot));
 						inv.setItem(slot, oldItem == null ? null : oldItem.getItemStack());
+						if (oldItem != null) c.addItem(oldItem.getItemStack());
 						c.equipment.setChestplate(item);
 						break;
 					case GLOVES:
 						oldItem = c.equipment.getGloves();
 						c.removeItem(inv.getItem(slot));
 						inv.setItem(slot, oldItem == null ? null : oldItem.getItemStack());
+						if (oldItem != null) c.addItem(oldItem.getItemStack());
 						c.equipment.setGloves(item);
 						break;
 					case HELMET:
 						oldItem = c.equipment.getHelmet();
 						c.removeItem(inv.getItem(slot));
 						inv.setItem(slot, oldItem == null ? null : oldItem.getItemStack());
+						if (oldItem != null) c.addItem(oldItem.getItemStack());
 						c.equipment.setHelmet(item);
 						break;
 					case LEGGINGS:
 						oldItem = c.equipment.getLeggings();
 						c.removeItem(inv.getItem(slot));
 						inv.setItem(slot, oldItem == null ? null : oldItem.getItemStack());
+						if (oldItem != null) c.addItem(oldItem.getItemStack());
 						c.equipment.setLeggings(item);
 						break;
 					case NECKLACE:
 						oldItem = c.equipment.getNecklace();
 						c.removeItem(inv.getItem(slot));
 						inv.setItem(slot, oldItem == null ? null : oldItem.getItemStack());
+						if (oldItem != null) c.addItem(oldItem.getItemStack());
 						c.equipment.setNecklace(item);
 						break;
 					case RING:
@@ -525,11 +556,13 @@ public class Listeners implements Listener {
 							oldItem = c.equipment.getFirstRing();
 							c.removeItem(inv.getItem(slot));
 							inv.setItem(slot, oldItem == null ? null : oldItem.getItemStack());
+							if (oldItem != null) c.addItem(oldItem.getItemStack());
 							c.equipment.setFirstRing(item);
 						} else if (evt.isRightClick()) {
 							oldItem = c.equipment.getSecondRing();
 							c.removeItem(inv.getItem(slot));
 							inv.setItem(slot, oldItem == null ? null : oldItem.getItemStack());
+							if (oldItem != null) c.addItem(oldItem.getItemStack());
 							c.equipment.setSecondRing(item);
 						}
 						break;
@@ -542,24 +575,31 @@ public class Listeners implements Listener {
 						Item oldItem = c.equipment.getWeapon();
 						c.removeItem(inv.getItem(slot));
 						inv.setItem(slot, oldItem == null ? null : oldItem.getItemStack());
+						if (oldItem != null) c.addItem(oldItem.getItemStack());
 						c.equipment.setWeapon(item);
 					} else if (evt.isRightClick()) {
 						if (!c.canDualWield()) {
 							Item oldItem = c.equipment.getWeapon();
 							c.removeItem(inv.getItem(slot));
 							inv.setItem(slot, oldItem == null ? null : oldItem.getItemStack());
+							if (oldItem != null) c.addItem(oldItem.getItemStack());
 							c.equipment.setWeapon(item);
+						} else {
+							Item oldItem = c.equipment.getOffhand();
+							c.removeItem(inv.getItem(slot));
+							inv.setItem(slot, oldItem == null ? null : oldItem.getItemStack());
+							if (oldItem != null) c.addItem(oldItem.getItemStack());
+							c.equipment.setOffhand(item);
 						}
-						Item oldItem = c.equipment.getOffhand();
-						c.removeItem(inv.getItem(slot));
-						inv.setItem(slot, oldItem == null ? null : oldItem.getItemStack());
-						c.equipment.setOffhand(item);
 					}
+					c.equipment.display(inv);
 				} else if (ItemUtils.isOffhandItem(item)) {
 					Item oldItem = c.equipment.getOffhand();
 					c.removeItem(inv.getItem(slot));
 					inv.setItem(slot, oldItem == null ? null : oldItem.getItemStack());
+					if (oldItem != null) c.addItem(oldItem.getItemStack());
 					c.equipment.setOffhand(item);
+					c.equipment.display(inv);
 				}
 			}
 		}
@@ -573,7 +613,7 @@ public class Listeners implements Listener {
 					ItemStack is = inv.getItem(slot);
 					for (Bag b : c.bags) {
 						if (!b.isFull()) {
-							b.getInventory().addItem(is);
+							c.addItem(is);
 							c.equipment.setHelmet(null);
 							inv.setItem(0, new ItemStackBuilder()
 							.withMaterial(Material.BEETROOT)
@@ -593,7 +633,7 @@ public class Listeners implements Listener {
 					ItemStack is = inv.getItem(slot);
 					for (Bag b : c.bags) {
 						if (!b.isFull()) {
-							b.getInventory().addItem(is);
+							c.addItem(is);
 							c.equipment.setNecklace(null);
 							inv.setItem(9, new ItemStackBuilder()
 							.withMaterial(Material.RABBIT_FOOT)
@@ -613,7 +653,7 @@ public class Listeners implements Listener {
 					ItemStack is = inv.getItem(slot);
 					for (Bag b : c.bags) {
 						if (!b.isFull()) {
-							b.getInventory().addItem(is);
+							c.addItem(is);
 							c.equipment.setChestplate(null);
 							inv.setItem(18, new ItemStackBuilder()
 							.withMaterial(Material.RABBIT_STEW)
@@ -633,7 +673,7 @@ public class Listeners implements Listener {
 					ItemStack is = inv.getItem(slot);
 					for (Bag b : c.bags) {
 						if (!b.isFull()) {
-							b.getInventory().addItem(is);
+							c.addItem(is);
 							c.equipment.setFirstRing(null);
 							inv.setItem(19, new ItemStackBuilder()
 							.withMaterial(Material.BLAZE_POWDER)
@@ -653,7 +693,7 @@ public class Listeners implements Listener {
 					ItemStack is = inv.getItem(slot);
 					for (Bag b : c.bags) {
 						if (!b.isFull()) {
-							b.getInventory().addItem(is);
+							c.addItem(is);
 							c.equipment.setGloves(null);
 							inv.setItem(27, new ItemStackBuilder()
 							.withMaterial(Material.GOLDEN_CARROT)
@@ -673,7 +713,7 @@ public class Listeners implements Listener {
 					ItemStack is = inv.getItem(slot);
 					for (Bag b : c.bags) {
 						if (!b.isFull()) {
-							b.getInventory().addItem(is);
+							c.addItem(is);
 							c.equipment.setSecondRing(null);
 							inv.setItem(28, new ItemStackBuilder()
 							.withMaterial(Material.BLAZE_POWDER)
@@ -693,7 +733,7 @@ public class Listeners implements Listener {
 					ItemStack is = inv.getItem(slot);
 					for (Bag b : c.bags) {
 						if (!b.isFull()) {
-							b.getInventory().addItem(is);
+							c.addItem(is);
 							c.equipment.setLeggings(null);
 							inv.setItem(36, new ItemStackBuilder()
 							.withMaterial(Material.GHAST_TEAR)
@@ -713,7 +753,7 @@ public class Listeners implements Listener {
 					ItemStack is = inv.getItem(slot);
 					for (Bag b : c.bags) {
 						if (!b.isFull()) {
-							b.getInventory().addItem(is);
+							c.addItem(is);
 							c.equipment.setBoots(null);
 							inv.setItem(45, new ItemStackBuilder()
 							.withMaterial(Material.NETHER_STALK)
@@ -727,24 +767,104 @@ public class Listeners implements Listener {
 				}
 			}
 			break;
+		case 47:
+			if (inv.getItem(slot).getType() != Material.DIAMOND_SWORD) {
+				if (ItemUtils.isMMOItem(ItemUtils.asNMS(inv.getItem(slot)))) {
+					ItemStack is = inv.getItem(slot);
+					for (Bag b : c.bags) {
+						if (!b.isFull()) {
+							c.addItem(is);
+							c.equipment.setWeapon(null);
+							inv.setItem(47, new ItemStackBuilder()
+							.withMaterial(Material.DIAMOND_SWORD)
+							.withDisplayName("§f"+TranslatedString.getString(30019, p))
+							.build());
+							return;
+						}
+					}
+					p.sendMessage("§cInventory full.");
+					return;
+				}
+			}
+			break;
+		case 48:
+			if (inv.getItem(slot).getType() != Material.DIAMOND_HOE) {
+				if (ItemUtils.isMMOItem(ItemUtils.asNMS(inv.getItem(slot)))) {
+					ItemStack is = inv.getItem(slot);
+					for (Bag b : c.bags) {
+						if (!b.isFull()) {
+							c.addItem(is);
+							c.equipment.setOffhand(null);
+							inv.setItem(48, new ItemStackBuilder()
+							.withMaterial(Material.DIAMOND_HOE)
+							.withDisplayName("§f"+TranslatedString.getString(30019, p))
+							.build());
+							return;
+						}
+					}
+					p.sendMessage("§cInventory full.");
+					return;
+				}
+			}
+			break;
 		case 59:
 			if (inv.getItem(slot).getType() == Material.LEATHER) {
 				c.bags.get(0).display(inv);
+				ItemStack is = inv.getItem(59);
+				ItemMeta meta = is.getItemMeta();
+				meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+				meta.addEnchant(Enchantment.DAMAGE_ALL, 1, true);
+				is.setItemMeta(meta);
+				inv.setItem(59, is);
+
+				inv.getItem(60).removeEnchantment(Enchantment.DAMAGE_ALL);
+				inv.getItem(61).removeEnchantment(Enchantment.DAMAGE_ALL);
+				inv.getItem(62).removeEnchantment(Enchantment.DAMAGE_ALL);
 			}
 			break;
 		case 60:
 			if (inv.getItem(slot).getType() == Material.LEATHER) {
 				c.bags.get(1).display(inv);
+				ItemStack is = inv.getItem(60);
+				ItemMeta meta = is.getItemMeta();
+				meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+				meta.addEnchant(Enchantment.DAMAGE_ALL, 1, true);
+				is.setItemMeta(meta);
+				inv.setItem(60, is);
+
+				inv.getItem(59).removeEnchantment(Enchantment.DAMAGE_ALL);
+				inv.getItem(61).removeEnchantment(Enchantment.DAMAGE_ALL);
+				inv.getItem(62).removeEnchantment(Enchantment.DAMAGE_ALL);
 			}
 			break;
 		case 61:
 			if (inv.getItem(slot).getType() == Material.LEATHER) {
 				c.bags.get(2).display(inv);
+				ItemStack is = inv.getItem(61);
+				ItemMeta meta = is.getItemMeta();
+				meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+				meta.addEnchant(Enchantment.DAMAGE_ALL, 1, true);
+				is.setItemMeta(meta);
+				inv.setItem(61, is);
+
+				inv.getItem(59).removeEnchantment(Enchantment.DAMAGE_ALL);
+				inv.getItem(60).removeEnchantment(Enchantment.DAMAGE_ALL);
+				inv.getItem(62).removeEnchantment(Enchantment.DAMAGE_ALL);
 			}
 			break;
 		case 62:
 			if (inv.getItem(slot).getType() == Material.LEATHER) {
 				c.bags.get(3).display(inv);
+				ItemStack is = inv.getItem(62);
+				ItemMeta meta = is.getItemMeta();
+				meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+				meta.addEnchant(Enchantment.DAMAGE_ALL, 1, true);
+				is.setItemMeta(meta);
+				inv.setItem(62, is);
+
+				inv.getItem(59).removeEnchantment(Enchantment.DAMAGE_ALL);
+				inv.getItem(60).removeEnchantment(Enchantment.DAMAGE_ALL);
+				inv.getItem(61).removeEnchantment(Enchantment.DAMAGE_ALL);
 			}
 			break;
 		default:

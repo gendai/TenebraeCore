@@ -8,6 +8,7 @@ import org.bukkit.Location;
 import org.bukkit.boss.BossBar;
 
 import fr.tenebrae.MMOCore.Items.Item;
+import fr.tenebrae.MMOCore.Mechanics.Damage;
 
 public interface ICreature {
 	
@@ -46,5 +47,16 @@ public interface ICreature {
 	public double getCriticalChance();
 	public double getArmor();
 	public double getMagicalArmor();
+
+	public void onTickBefore();
+	public void onTickAfter();
+	public void onTickBeforeCustom();
+	public void onDamaged(Entity damager, int amount);
+	public void onDamage(Damage damage);
+	public void onEnterCombat(Entity target);
+	public void onReset();
+	public void onDropCombat();
+	public void onChangeTarget(Entity oldTarget, Entity newTarget);
+	public void onSpawn();
 	
 }

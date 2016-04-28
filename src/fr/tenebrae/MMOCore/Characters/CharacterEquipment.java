@@ -53,6 +53,21 @@ public class CharacterEquipment {
 		setWeapon(list.get(8), false);
 		setOffhand(list.get(9), false);
 	}
+	
+	public void update() {
+		List<Item> list = this.asList();
+
+		if (list.get(0) != null) setHelmet(list.get(0).setLocale(character.getLanguage()), false);
+		if (list.get(1) != null) setNecklace(list.get(1).setLocale(character.getLanguage()), false);
+		if (list.get(2) != null) setChestplate(list.get(2).setLocale(character.getLanguage()), false);
+		if (list.get(3) != null) setGloves(list.get(3).setLocale(character.getLanguage()), false);
+		if (list.get(4) != null) setFirstRing(list.get(4).setLocale(character.getLanguage()), false);
+		if (list.get(5) != null) setSecondRing(list.get(5).setLocale(character.getLanguage()), false);
+		if (list.get(6) != null) setLeggings(list.get(6).setLocale(character.getLanguage()), false);
+		if (list.get(7) != null) setBoots(list.get(7).setLocale(character.getLanguage()), false);
+		if (list.get(8) != null) setWeapon(list.get(8).setLocale(character.getLanguage()), false);
+		if (list.get(9) != null) setOffhand(list.get(9).setLocale(character.getLanguage()), false);
+	}
 
 	public Item getHelmet() {
 		return helmet;
