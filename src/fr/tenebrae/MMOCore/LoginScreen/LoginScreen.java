@@ -23,7 +23,6 @@ import com.gmail.filoghost.holographicdisplays.api.line.TextLine;
 import fr.tenebrae.MMOCore.Main;
 import fr.tenebrae.MMOCore.SQLResultSet;
 import fr.tenebrae.MMOCore.Mechanics.MMOClass;
-import fr.tenebrae.MMOCore.Utils.NicknameAPI;
 import fr.tenebrae.MMOCore.Utils.SQLHelper;
 import fr.tenebrae.PlayerLanguage.LanguageAPI;
 
@@ -70,16 +69,12 @@ public class LoginScreen {
 			p.hidePlayer(pl);
 		}
 		
-		new BukkitRunnable() {
+		/*new BukkitRunnable() {
 			@Override
 			public void run() {
-				try {
-					NicknameAPI.applyNick(p, p.getName());
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+				NickNamerAPI.getNickManager().setNick(p.getUniqueId(), p.getName());
 			}
-		}.runTaskLaterAsynchronously(Main.plugin, 20L);
+		}.runTaskLaterAsynchronously(Main.plugin, 20L);*/
 		
 		this.playButton = HologramsAPI.createHologram(Main.plugin, playButtonLoc);
 		VisibilityManager vmp = this.playButton.getVisibilityManager();
@@ -134,6 +129,7 @@ public class LoginScreen {
 						@Override
 						public void onTouch(Player pt) {
 							if (!pt.getName().equals(p.getName())) return;
+							if (CharacterCreator.creatingPlayers.containsKey(pt.getName())) return;
 							createCharacter();
 						}
 					});
@@ -191,3 +187,4 @@ public class LoginScreen {
 		}.runTaskLaterAsynchronously(Main.plugin, 20L);
 	}
 }
+>>>>>>> upstream/master

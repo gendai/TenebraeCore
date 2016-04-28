@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.regex.Pattern;
 
 import net.minecraft.server.v1_9_R1.CancelledPacketHandleException;
 
@@ -38,7 +37,7 @@ import fr.tenebrae.PlayerLanguage.LanguageAPI;
 
 public class CharacterCreator implements Listener {
 
-	public static Map<Player,CharacterCreator> creatingPlayers = new HashMap<Player,CharacterCreator>();
+	public static Map<String,CharacterCreator> creatingPlayers = new HashMap<String,CharacterCreator>();
 
 	private Player p;
 	private Inventory mainInv;
@@ -53,9 +52,15 @@ public class CharacterCreator implements Listener {
 	private boolean isChoosingName = false;
 
 	public CharacterCreator(Player p) {
+		Main.log.info("Initializing character creator for player "+p.getName());
 		this.p = p;
 		this.language = LanguageAPI.getStringLanguage(p);
-		creatingPlayers.put(p, this);
+		if (creatingPlayers.containsKey(p.getName())) {
+			Main.log.info("Removing old registered CharacterCreator of player "+p.getName());
+			HandlerList.unregisterAll(creatingPlayers.get(p.getName()));
+			creatingPlayers.remove(p.getName());
+			creatingPlayers.put(p.getName(), this);
+		}
 
 		this.mainInv = Bukkit.createInventory(p, InventoryType.HOPPER, TranslatedString.getString(20000, this.language));
 		this.mainInv.setItem(0, new ItemStackBuilder()
@@ -82,6 +87,7 @@ public class CharacterCreator implements Listener {
 		.withDisplayName("§a"+TranslatedString.getString(20005, this.language))
 		.withAmount(1)
 		.build());
+		Main.log.info("Main inv setupped for player "+p.getName());
 
 		this.selectClass = Bukkit.createInventory(p, InventoryType.HOPPER, TranslatedString.getString(20002, this.language));
 		this.selectClass.setItem(0, new ItemStackBuilder()
@@ -108,6 +114,7 @@ public class CharacterCreator implements Listener {
 		.withLore(Arrays.asList(TranslatedString.getString(21003, this.language).split(" %n% ")))
 		.withAmount(1)
 		.build());
+		Main.log.info("SelectClass inv setupped for player "+p.getName());
 
 		this.selectGender = Bukkit.createInventory(p, InventoryType.HOPPER, TranslatedString.getString(20003, this.language));
 		this.selectGender.setItem(1, new ItemStackBuilder()
@@ -124,49 +131,55 @@ public class CharacterCreator implements Listener {
 		.withOwner("MHF_Alex")
 		.withAmount(1)
 		.build());
+		Main.log.info("SelectGender inv setupped for player "+p.getName());
 
 		Main.plugin.getServer().getPluginManager().registerEvents(this, Main.plugin);
+		Main.log.info("Registered creation events for player "+p.getName());
 		chooseName();
 
 	}
 
 	public void chooseName() {
+		Main.log.info("Choosing name for player "+p.getName());
 		TitleAPI.sendTitle(p, 5, 32767, 5, " ", TranslatedString.getString(20004, p));
 		this.isChoosingName = true;
 		p.closeInventory();
 	}
-	
+
 	public void chooseClass() {
+		Main.log.info("Choosing class for player "+p.getName());
 		p.closeInventory();
 		p.openInventory(this.selectClass);
 	}
-	
+
 	public void chooseGender() {
+		Main.log.info("Choosing gender for player "+p.getName());
 		p.closeInventory();
 		p.openInventory(this.selectGender);
 	}
-	
+
 	public void done() {
+		Main.log.info("Attempt to create character for player "+p.getName());
 		if (charName.equals("Unnamed")) {
 			p.sendMessage("§cUnnamed character.");
 			return;
 		}
-		
+
 		String serializedQuests = "none";
 		String serializedStats = "";
 		String serializedInventory = InventorySerializer.toBase64(Character.setupInventory(this.mmoClass.getStartWeapon(), this.language));
 		String serializedEquipment = "null#@#null#@#"+ItemStackSerializer.toBase64(this.mmoClass.getStartArmor().getItemStack())+"#@#null#@#null#@#null#@#null#@#null#@#"+ItemStackSerializer.toBase64(this.mmoClass.getStartWeapon().getItemStack())+"#@#null";
-		String serializedBags = new Bag(27).toString();
+		String serializedBags = new Bag(23).toString();
 		String location = LocationSerializer.locationToString(Main.START_LOCATION);
-		
+
 		for (Entry<Stats,Double> entry : this.mmoClass.getBaseStats().entrySet()) {
 			serializedStats += entry.getKey().toString()+":"+entry.getValue()+"@";
 		}
 		serializedStats = serializedStats.substring(0, serializedStats.length()-1);
-		
+
 		String[] columns = {"name","owner_uuid","level","xp","class","hp","activeQuests","stats","inventory","equipment","location","bags"};
 		Object[] values = {this.charName, this.p.getUniqueId().toString(), 1, 0, this.mmoClass, this.mmoClass.getBaseStats().get(Stats.HEALTH), serializedQuests, serializedStats, serializedInventory, serializedEquipment, location, serializedBags};
-		
+
 		try {
 			SQLHelper.insertEntry(Main.DB_DATABASE, Main.DB_PLAYERS_TABLE, columns, values);
 		} catch (ClassNotFoundException | SQLException e) {
@@ -175,13 +188,13 @@ public class CharacterCreator implements Listener {
 		}
 
 		HandlerList.unregisterAll(this);
-		CharacterCreator.creatingPlayers.remove(p);
+		CharacterCreator.creatingPlayers.remove(p.getName());
 		new LoginScreen(p);
 	}
 
 	@EventHandler
 	public void onChat(AsyncPlayerChatEvent evt) {
-		if (evt.getPlayer() != this.p) return;
+		if (!evt.getPlayer().getName().equals(this.p.getName())) return;
 		evt.setCancelled(true);
 		if (!this.isChoosingName) return;
 		String name = evt.getMessage().split(" ")[0];
@@ -189,14 +202,17 @@ public class CharacterCreator implements Listener {
 			p.sendMessage(TranslatedString.getString(10097, p));
 			return;
 		}
-		if (Pattern.compile("([0-9])").matcher(name).find()) {
+		//if (Pattern.compile("([0-9])").matcher(name).find()) {
+		if (!name.matches("[a-zA-Z]+")) {
 			p.sendMessage(TranslatedString.getString(10098, p));
 			return;
 		}
+		SQLResultSet sqlRS = null;
 		try {
-			SQLResultSet sqlRS = SQLHelper.getSortedEntrys(Main.DB_DATABASE, Main.DB_PLAYERS_TABLE, "name", name);
+			sqlRS = SQLHelper.getSortedEntrys(Main.DB_DATABASE, Main.DB_PLAYERS_TABLE, "name", name);
 			ResultSet set = sqlRS.getResultSet();
 			if (!set.next()) {
+				Main.log.info("Creating character '"+name+"' for player "+p.getName());
 				this.charName = name;
 				this.mainInv.setItem(0, new ItemStackBuilder()
 				.withMaterial(Material.SKULL_ITEM)
@@ -207,8 +223,10 @@ public class CharacterCreator implements Listener {
 				.withLore(Arrays.asList(TranslatedString.getString(20001, this.language).replace("%gender%", this.gender.getString(this.language)).replace("%class%", this.mmoClass.getString(this.language)).split(" %n% ")))
 				.build());
 				this.p.openInventory(this.mainInv);
+				Main.log.info("Opened main inventory for player "+p.getName());
 				this.isChoosingName = false;
 				TitleAPI.clearTitle(p);
+				Main.log.info("Cleared title for player "+p.getName());
 				sqlRS.close();
 				return;
 			} else {
@@ -219,15 +237,22 @@ public class CharacterCreator implements Listener {
 		} catch (SQLException | ClassNotFoundException e) {
 			p.sendMessage(TranslatedString.getString(10099, p));
 			e.printStackTrace();
+			try { if (sqlRS != null) sqlRS.close(); } catch (SQLException e1) {}
 			return;
-		} catch (CancelledPacketHandleException nmsE) {}
+		} catch (CancelledPacketHandleException nmsE) {
+			try { if (sqlRS != null) sqlRS.close(); } catch (SQLException e) {}
+		}
 	}
 
 	@EventHandler
 	public void onInvClick(InventoryClickEvent evt) {
+		Main.log.info("Click event launched for the CharacterCreator registered for "+this.p.getName());
+		if (evt.getClickedInventory() == null) return;
 		if (!(evt.getWhoClicked() instanceof Player)) return;
 		Player p = (Player)evt.getWhoClicked();
+		Main.log.info("Comparing "+p.getName()+" with "+this.p.getName());
 		if (!p.getName().equals(this.p.getName())) return;
+		Main.log.info("It does match.");
 		evt.setCancelled(true);
 		Inventory inv = evt.getClickedInventory();
 		int slot = evt.getRawSlot();

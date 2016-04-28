@@ -22,6 +22,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import fr.tenebrae.MMOCore.Items.Item;
+import fr.tenebrae.MMOCore.Mechanics.Damage;
 import fr.tenebrae.MMOCore.Quests.Quest;
 import fr.tenebrae.MMOCore.Quests.QuestCondition;
 import fr.tenebrae.MMOCore.Quests.QuestObjective;
@@ -439,6 +440,66 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 	public double getMagicalArmor() {
 		// TODO Auto-generated method stub
 		return 0;
+	}
+
+	@Override
+	public void onTickBefore() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onTickAfter() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onTickBeforeCustom() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onDamaged(Entity damager, int amount) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onDamage(Damage damage) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onEnterCombat(Entity target) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onReset() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onDropCombat() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onChangeTarget(Entity oldTarget, Entity newTarget) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onSpawn() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

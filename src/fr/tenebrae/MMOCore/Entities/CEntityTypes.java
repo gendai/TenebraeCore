@@ -9,14 +9,21 @@ import net.minecraft.server.v1_9_R1.BiomeBase.BiomeMeta;
 import net.minecraft.server.v1_9_R1.EntityCaveSpider;
 import net.minecraft.server.v1_9_R1.EntityInsentient;
 import net.minecraft.server.v1_9_R1.EntityTypes;
-import net.minecraft.server.v1_9_R1.EntityVillager;
+import net.minecraft.server.v1_9_R1.EntityZombie;
 
 import org.bukkit.entity.EntityType;
 
+import fr.tenebrae.MMOCore.Entities.MMOEntities.L01MineSpider;
+import fr.tenebrae.MMOCore.Entities.MMOEntities.L02MineBroodMother;
+import fr.tenebrae.MMOCore.Entities.MMOEntities.L10AlphaTestZombie;
+import fr.tenebrae.MMOCore.Entities.MMOEntities.L17NivlasSpider;
+
 public enum CEntityTypes {
-	
-	L01MineSpider("L01MineSpider", 59, EntityType.SPIDER, EntityCaveSpider.class, L01MineSpider.class),
-	QuestNpc("QuestNpc",120,EntityType.VILLAGER, EntityVillager.class, QuestNpc.class);
+
+	L01MineSpider("L01MineSpider", 59, EntityType.CAVE_SPIDER, EntityCaveSpider.class, L01MineSpider.class),
+	L02MineBroodMother("L02MineBroodMother", 52, EntityType.SPIDER, EntityCaveSpider.class, L02MineBroodMother.class),
+	L10AlphaTestZombie("L10AlphaTestZombie", 54, EntityType.ZOMBIE, EntityZombie.class, L10AlphaTestZombie.class),
+	L17NivlasSpider("L17NivlasSpider", 59, EntityType.CAVE_SPIDER, EntityCaveSpider.class, L17NivlasSpider.class);
 	
 	private String name;
 	private int id;

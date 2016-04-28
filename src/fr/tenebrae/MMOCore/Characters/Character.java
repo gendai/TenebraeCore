@@ -18,17 +18,22 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.craftbukkit.v1_9_R1.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_9_R1.entity.CraftPlayer;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import fr.tenebrae.MMOCore.Main;
 import fr.tenebrae.MMOCore.SQLResultSet;
 import fr.tenebrae.MMOCore.Bags.Bag;
 import fr.tenebrae.MMOCore.Items.Item;
+import fr.tenebrae.MMOCore.Items.ItemUtils;
+import fr.tenebrae.MMOCore.LoginScreen.LoginScreen;
 import fr.tenebrae.MMOCore.Mechanics.MMOClass;
 import fr.tenebrae.MMOCore.Mechanics.Stats;
 import fr.tenebrae.MMOCore.Quests.Quest;
@@ -56,9 +61,11 @@ public class Character {
 	public net.minecraft.server.v1_9_R1.Entity lastDamager = null;
 	public CharacterEquipment equipment;
 	public Date lastAttackDate;
+	public Date lastDamagedDate;
 	public boolean dualWielding = false;
 	public int money = 0;
-	
+	public boolean inFight = false;
+
 
 	public Character(String characterName) {
 		try {
@@ -69,6 +76,7 @@ public class Character {
 
 			this.characterName = characterName;
 			this.lastAttackDate = new Date();
+			this.lastDamagedDate = new Date(new Date().getTime()-150000);
 			this.accountPlayer = Bukkit.getPlayer(UUID.fromString(charRow.getString("owner_uuid")));
 			this.accountPlayer.getInventory().setContents(InventorySerializer.fromBase64(charRow.getString("inventory")).getContents());
 			this.level = charRow.getInt("level");
@@ -89,7 +97,7 @@ public class Character {
 			if (!charRow.getString("activeQuests").equals("none")) {
 
 			}
-			
+
 			if (!charRow.getString("bags").equals("none")) {
 				if (!charRow.getString("bags").contains("#@#")) {
 					bags.add(new Bag(charRow.getString("bags")));
@@ -105,14 +113,21 @@ public class Character {
 			this.accountPlayer.teleport(LocationSerializer.stringToLocation(charRow.getString("location")));
 			this.accountPlayer.setExp(1F * ((1F * this.xp) / (1F * (8+(level*112)))));
 			this.accountPlayer.setLevel(level);
-			
+
 			sqlRS.close();
+
+			new BukkitRunnable() {
+				@Override
+				public void run() {
+					updateInventory();
+				}
+			}.runTaskLaterAsynchronously(Main.plugin, 20L);
 			new BukkitRunnable() {
 				@Override
 				public void run() {
 					updateStats();
 				}
-			}.runTaskLaterAsynchronously(Main.plugin, 25L);
+			}.runTaskLaterAsynchronously(Main.plugin, 30L);
 		} catch (Exception e) { e.printStackTrace(); }
 
 		new BukkitRunnable() {
@@ -122,7 +137,19 @@ public class Character {
 					this.cancel();
 					return;
 				}
-				ActionBarAPI.sendActionBar(accountPlayer, "§cHealth: §7"+hp+"§6/§f"+getMaxHp());
+				if (inFight) {
+					if (new Date().getTime() - lastDamagedDate.getTime() > 6000) {
+						setInFight(false);
+					}
+				}
+				int maxHp = getMaxHp();
+				if (!inFight && hp < maxHp) {
+					hp += 1+(level*2);
+					if (hp > maxHp) hp = maxHp;
+					accountPlayer.setHealth((hp*20.0)/maxHp);
+				}
+				if (hp > maxHp) hp = maxHp;
+				ActionBarAPI.sendActionBar(accountPlayer, "§cHealth: §7"+hp+"§6/§f"+maxHp);
 			}
 		}.runTaskTimerAsynchronously(Main.plugin, 20L, 20L);
 	}
@@ -144,11 +171,12 @@ public class Character {
 	}
 
 	public String getLanguage() {
-		return LanguageAPI.getLanguage(accountPlayer).toString().toLowerCase();
+		return LanguageAPI.getStringLanguage(accountPlayer);
 	}
 
 	public void setLanguage(Languages language) {
 		LanguageAPI.setLanguage(accountPlayer, language);
+		updateInventory();
 	}
 
 	public int getLevel() {
@@ -158,27 +186,27 @@ public class Character {
 	public int getXp() {
 		return xp;
 	}
-	
+
 	public void addXp(int xp) {
 		//Main.log.info("Adding "+xp+" xp");
 		//Main.log.info("Old xp was "+this.xp);
 		this.xp += xp;
 		//Main.log.info("New xp is "+this.xp);
-		
+
 		int max = 8+(level*112);
 		//Main.log.info("Xp cap for level "+level+" is "+max);
 		if (this.xp >= max) {
 			this.xp = this.xp - max;
 			this.levelUp();
 		}
-		
+
 		this.accountPlayer.setExp(1F * ((1F * this.xp) / (1F * (8+(level*112)))));
 	}
-	
+
 	public void addStat(Stats stat, double amount) {
 		this.stats.put(stat, this.stats.get(stat)+amount);
 	}
-	
+
 	public void levelUp() {
 		this.level++;
 		switch(mmoClass) {
@@ -211,11 +239,13 @@ public class Character {
 			break;
 		default:
 			break;
-		
+
 		}
+		this.hp = getMaxHp();
+		this.accountPlayer.setHealth(20.0D);
 		this.accountPlayer.setLevel(level);
 	}
-	
+
 	public void updateStats() {
 		new BukkitRunnable() {
 			@Override
@@ -277,27 +307,39 @@ public class Character {
 		}
 		return returned;
 	}
-	
+
 	public void removeItem(ItemStack is) {
 		if (bags.isEmpty()) return;
 		for (Bag b : bags) {
 			if (b.getInventory().contains(is)) {
-				b.getInventory().remove(is);
+				b.getInventory().setItem(b.getInventory().first(is), null);
 				return;
 			}
 		}
 	}
-	
-	public void addItem(ItemStack is) {
-		if (bags.isEmpty()) return;
-		for (Bag b : bags) {
-			if (!b.isFull()) {
-				b.getInventory().addItem(is);
-				return;
+
+	public void addItem(final ItemStack is) {
+		new BukkitRunnable() {
+			@Override
+			public void run() {
+				if (!ItemUtils.isMMOItem(is)) return;
+				final Item i = new Item(is).setLocale(getLanguage());
+				if (bags.isEmpty()) return;
+				for (final Bag b : bags) {
+					if (!b.isFull()) {
+						new BukkitRunnable() {
+							@Override
+							public void run() {
+								b.getInventory().addItem(i.getItemStack());
+							}
+						}.runTaskLater(Main.plugin, 2L);
+						return;
+					}
+				}
 			}
-		}
+		}.runTaskAsynchronously(Main.plugin);
 	}
-	
+
 	public boolean canDualWield() {
 		return this.dualWielding;
 	}
@@ -311,12 +353,32 @@ public class Character {
 	public void damage(net.minecraft.server.v1_9_R1.Entity damager, int amount) {
 		this.hp -= amount;
 		this.lastDamager = damager;
+		this.lastDamagedDate = new Date();
 		this.accountPlayer.damage(0.0D);
 		if (hp <= 0) {
 			die();
 			return;
 		}
 		this.accountPlayer.setHealth((this.hp*20.0)/getMaxHp());
+		if (!this.inFight) {
+			setInFight(true);
+			new BukkitRunnable() {
+				@Override
+				public void run() {
+					if (new Date().getTime()-lastDamagedDate.getTime() >= 6000) {
+						setInFight(false);
+						this.cancel();
+						return;
+					}
+				}
+			}.runTaskTimerAsynchronously(Main.plugin, 20L, 20L);
+		}
+	}
+
+	public void setInFight(boolean fight) {
+		if (fight && !this.inFight) accountPlayer.sendMessage("§cYou are now in fight.");
+		else if (!fight && this.inFight) accountPlayer.sendMessage("§aYou are no longer in fight.");
+		this.inFight = fight;
 	}
 
 	public void damage(Entity damager, int amount) {
@@ -337,7 +399,9 @@ public class Character {
 
 	public void disconnect() {
 		save();
-		accountPlayer.kickPlayer("§aSuccessfully disconnected.");
+		accountPlayer.sendMessage("§aSuccessfully disconnected.");
+		Main.connectedCharacters.remove(accountPlayer);
+		new LoginScreen(accountPlayer);
 	}
 
 	public void die() {
@@ -346,7 +410,7 @@ public class Character {
 
 	public void save() {
 		try {
-			
+
 			String serializedQuests = "";
 			String serializedStats = "";
 			String serializedEquipment = "";
@@ -374,7 +438,7 @@ public class Character {
 				}
 			}
 			serializedEquipment = serializedEquipment.substring(0, serializedEquipment.length()-3);
-			
+
 			if (bags.isEmpty()) {
 				serializedBags = "none";
 			} else {
@@ -394,7 +458,84 @@ public class Character {
 	}
 
 	public void updateInventory() {
-		
+		String language = this.getLanguage();
+		this.equipment.update();
+		for (Bag b : this.bags) {
+			for (ItemStack is : b.getInventory().getContents()) {
+				if (is != null) {
+					if (ItemUtils.isMMOItem(is)) {
+						Item i = new Item(is);
+						i.setLocale(language);
+					}
+				}
+			}
+		}
+
+		Inventory returned = this.accountPlayer.getInventory();
+		returned.setItem(9, new ItemStackBuilder()
+		.withMaterial(Material.PAPER)
+		.withAmount(1)
+		.withDisplayName(TranslatedString.getString(70000, language))
+		.build());
+		returned.setItem(11, new ItemStackBuilder()
+		.withMaterial(Material.CHORUS_FRUIT)
+		.withAmount(1)
+		.withDisplayName(TranslatedString.getString(70001, language))
+		.build());
+		returned.setItem(12, new ItemStackBuilder()
+		.withMaterial(Material.CHORUS_FRUIT_POPPED)
+		.withAmount(1)
+		.withDisplayName(TranslatedString.getString(70002, language))
+		.build());
+		returned.setItem(14, new ItemStackBuilder()
+		.withMaterial(Material.MELON_SEEDS)
+		.withAmount(1)
+		.withDisplayName(TranslatedString.getString(70003, language))
+		.build());
+		returned.setItem(15, new ItemStackBuilder()
+		.withMaterial(Material.PUMPKIN_SEEDS)
+		.withAmount(1)
+		.withDisplayName(TranslatedString.getString(70004, language))
+		.build());
+		returned.setItem(17, new ItemStackBuilder()
+		.withMaterial(Material.BARRIER)
+		.withAmount(1)
+		.withDisplayName(TranslatedString.getString(70005, language))
+		.build());
+		for (int k = 18; k < 24; k++) {
+			returned.setItem(k, new ItemStackBuilder()
+			.withMaterial(Material.BEETROOT_SEEDS)
+			.withAmount(1)
+			.withDisplayName(TranslatedString.getString(70006, language))
+			.build());
+		}
+		returned.setItem(26, new ItemStackBuilder()
+		.withMaterial(Material.BOOK)
+		.withAmount(1)
+		.withDisplayName(TranslatedString.getString(70007, language))
+		.build());
+		for (int k = 27; k < 31; k++) {
+			returned.setItem(k, new ItemStackBuilder()
+			.withMaterial(Material.RABBIT_HIDE)
+			.withAmount(1)
+			.withDisplayName(TranslatedString.getString(70008, language))
+			.build());
+		}
+		returned.setItem(32, new ItemStackBuilder()
+		.withMaterial(Material.FEATHER)
+		.withAmount(1)
+		.withDisplayName(TranslatedString.getString(70009, language))
+		.build());
+		returned.setItem(33, new ItemStackBuilder()
+		.withMaterial(Material.FEATHER)
+		.withAmount(1)
+		.withDisplayName(TranslatedString.getString(70009, language))
+		.build());
+		returned.setItem(35, new ItemStackBuilder()
+		.withMaterial(Material.BOOK_AND_QUILL)
+		.withAmount(1)
+		.withDisplayName(TranslatedString.getString(70010, language))
+		.build());
 	}
 
 	public static Inventory setupInventory(Item startWeapon, String language) {
@@ -469,7 +610,7 @@ public class Character {
 
 		return returned;
 	}
-	
+
 	private String getFormattedMoney() {
 		String returned = "§r";
 		if (money > 10000) {
@@ -534,6 +675,16 @@ public class Character {
 		.withLore(Arrays.asList("§cWork In Progress"))
 		.build());
 		
+		if (!bags.isEmpty()) {
+			bags.get(0).display(opened);
+			ItemStack is = opened.getItem(59);
+			ItemMeta meta = is.getItemMeta();
+			meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+			meta.addEnchant(Enchantment.DAMAGE_ALL, 1, true);
+			is.setItemMeta(meta);
+			opened.setItem(59, is);
+		}
+
 		accountPlayer.openInventory(opened);
 	}
 
@@ -563,7 +714,7 @@ public class Character {
 		.build());
 		accountPlayer.openInventory(opened);
 	}
-	
+
 	public List<String> getDisplayedPrimaryStats() {
 		List<String> returned = new ArrayList<String>();
 
@@ -574,34 +725,34 @@ public class Character {
 		returned.add("§7"+Stats.SPIRIT.getString(LanguageAPI.getStringLanguage(accountPlayer))+"§2"+(int)this.getStat(Stats.SPIRIT));
 		returned.add("§7"+Stats.HEALTH.getString(LanguageAPI.getStringLanguage(accountPlayer))+"§c"+(int)this.getStat(Stats.HEALTH));
 		returned.add("§7"+Stats.MANA.getString(LanguageAPI.getStringLanguage(accountPlayer))+"§3"+(int)this.getStat(Stats.MANA));
-		
+
 		return returned;
 	}
-	
+
 	public List<String> getDisplayedSecondaryStats() {
 		List<String> returned = new ArrayList<String>();
 
 		returned.add("§7"+Stats.ATTACK_SPEED.getString(LanguageAPI.getStringLanguage(accountPlayer))+"§6"+(int)this.getStat(Stats.ATTACK_SPEED));
-		returned.add("§7"+Stats.ARMOR.getString(LanguageAPI.getStringLanguage(accountPlayer))+"§6"+this.getStat(Stats.ARMOR)+"%");
-		returned.add("§7"+Stats.MAGICAL_ARMOR.getString(LanguageAPI.getStringLanguage(accountPlayer))+"§6"+this.getStat(Stats.MAGICAL_ARMOR)+"%");
+		returned.add("§7"+Stats.ARMOR.getString(LanguageAPI.getStringLanguage(accountPlayer))+"§6"+new DecimalFormat("#.##").format(this.getStat(Stats.ARMOR))+"%");
+		returned.add("§7"+Stats.MAGICAL_ARMOR.getString(LanguageAPI.getStringLanguage(accountPlayer))+"§6"+new DecimalFormat("#.##").format(this.getStat(Stats.MAGICAL_ARMOR))+"%");
 		returned.add("§7"+Stats.POWER.getString(LanguageAPI.getStringLanguage(accountPlayer))+"§6"+(int)this.getStat(Stats.POWER));
 		returned.add("§7"+Stats.MAGICAL_POWER.getString(LanguageAPI.getStringLanguage(accountPlayer))+"§6"+(int)this.getStat(Stats.MAGICAL_POWER));
-		returned.add("§7"+Stats.CRITICAL_CHANCE.getString(LanguageAPI.getStringLanguage(accountPlayer))+"§6"+this.getStat(Stats.CRITICAL_CHANCE)+"%");
-		returned.add("§7"+Stats.DODGE_CHANCE.getString(LanguageAPI.getStringLanguage(accountPlayer))+"§6"+this.getStat(Stats.DODGE_CHANCE)+"%");
-		returned.add("§7"+Stats.HIT_CHANCE.getString(LanguageAPI.getStringLanguage(accountPlayer))+"§6"+this.getStat(Stats.HIT_CHANCE)+"%");
-		returned.add("§7"+Stats.BLOCK_CHANCE.getString(LanguageAPI.getStringLanguage(accountPlayer))+"§6"+this.getStat(Stats.BLOCK_CHANCE)+"%");
-		returned.add("§7"+Stats.XP_BONUS.getString(LanguageAPI.getStringLanguage(accountPlayer))+"§6"+this.getStat(Stats.XP_BONUS)+"%");
-		
+		returned.add("§7"+Stats.CRITICAL_CHANCE.getString(LanguageAPI.getStringLanguage(accountPlayer))+"§6"+new DecimalFormat("#.##").format(this.getStat(Stats.CRITICAL_CHANCE))+"%");
+		returned.add("§7"+Stats.DODGE_CHANCE.getString(LanguageAPI.getStringLanguage(accountPlayer))+"§6"+new DecimalFormat("#.##").format(this.getStat(Stats.DODGE_CHANCE))+"%");
+		returned.add("§7"+Stats.HIT_CHANCE.getString(LanguageAPI.getStringLanguage(accountPlayer))+"§6"+new DecimalFormat("#.##").format(this.getStat(Stats.HIT_CHANCE))+"%");
+		returned.add("§7"+Stats.BLOCK_CHANCE.getString(LanguageAPI.getStringLanguage(accountPlayer))+"§6"+new DecimalFormat("#.##").format(this.getStat(Stats.BLOCK_CHANCE))+"%");
+		returned.add("§7"+Stats.XP_BONUS.getString(LanguageAPI.getStringLanguage(accountPlayer))+"§6"+new DecimalFormat("#.##").format(this.getStat(Stats.XP_BONUS))+"%");
+
 		return returned;
 	}
-	
+
 	public List<String> getDisplayedGeneralInfos() {
 		List<String> returned = new ArrayList<String>();
 
 		returned.add("§7"+TranslatedString.getString(70108, accountPlayer)+"§e"+this.characterName);
 		returned.add("§7"+TranslatedString.getString(70110, accountPlayer)+"§e"+this.mmoClass.getString(LanguageAPI.getStringLanguage(accountPlayer)));
 		returned.add("§7"+TranslatedString.getString(70109, accountPlayer)+"§e"+"TODO Save gender information");
-		
+
 		return returned;
 	}
 }

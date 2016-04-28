@@ -7,6 +7,7 @@ import net.minecraft.server.v1_9_R1.NBTTagCompound;
 import org.bukkit.craftbukkit.v1_9_R1.inventory.CraftItemStack;
 import org.bukkit.inventory.ItemStack;
 
+import fr.tenebrae.MMOCore.Main;
 import fr.tenebrae.MMOCore.Items.Components.ItemType;
 
 public class ItemUtils {
@@ -27,6 +28,10 @@ public class ItemUtils {
 	
 	public static net.minecraft.server.v1_9_R1.ItemStack asNMS(org.bukkit.inventory.ItemStack original) {
 		if (original == null) return null;
+		if (!(original instanceof CraftItemStack)) {
+			Main.log.warning("Item could not be returned as its NMS handle: "+original.getType().name());
+			return CraftItemStack.asNMSCopy(original);
+		}
 		try {
 			CraftItemStack stack = (CraftItemStack)original;
 			Field f;
