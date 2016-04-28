@@ -73,7 +73,11 @@ public class LoginScreen {
 		new BukkitRunnable() {
 			@Override
 			public void run() {
-				NicknameAPI.applyNick(p, p.getName());
+				try {
+					NicknameAPI.applyNick(p, p.getName());
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		}.runTaskLaterAsynchronously(Main.plugin, 20L);
 		
@@ -178,7 +182,11 @@ public class LoginScreen {
 		new BukkitRunnable() {
 			@Override
 			public void run() {
-				NicknameAPI.applyNick(p, selectedChar);
+				try {
+					NicknameAPI.applyNick(p, selectedChar);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		}.runTaskLaterAsynchronously(Main.plugin, 20L);
 	}
