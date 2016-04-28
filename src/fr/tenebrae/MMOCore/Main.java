@@ -44,6 +44,7 @@ import fr.tenebrae.MMOCore.Entities.CEntityTypes;
 import fr.tenebrae.MMOCore.Items.ItemRegistry;
 import fr.tenebrae.MMOCore.Utils.NamePlatesAPI;
 import fr.tenebrae.MMOCore.Utils.TranslatedString;
+import fr.tenebrae.TenebraeDB.DbManager;
 
 public class Main extends JavaPlugin {
 
@@ -69,7 +70,7 @@ public class Main extends JavaPlugin {
 	public static String DB_STRING_TEMPLATE;
 	public static String DB_XP_TEMPLATE;
 
-	public DataSource ds;
+	public static DbManager db;
 	public BungeeMessageReceiver bmr;
 	public ProtocolManager protocolManager;
 
@@ -93,11 +94,7 @@ public class Main extends JavaPlugin {
 		DB_STRING_TEMPLATE = config.getString("sql.string_template");
 		DB_XP_TEMPLATE = config.getString("sql.xp_template");
 
-		try {
-			ds = DataSource.getInstance();
-		} catch (IOException | SQLException | PropertyVetoException e) {
-			e.printStackTrace();
-		}
+		Main.db = fr.tenebrae.TenebraeDB.Main.getApi();
 		plugin = this;
 		log = this.getLogger();
 		protocolManager = ProtocolLibrary.getProtocolManager();
