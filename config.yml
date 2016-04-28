@@ -11,14 +11,14 @@ general:
         pattern: '{Player} >>> {MSG}'
         range: 64
 sql:
-  host:
-  port:
-  database:
-  user:
-  password:
-  players_table: players
+  host: 127.0.0.1
+  port: 3306
+  database: db329774_extaziapvp
+  user: root
+  password: 1aqw2ZSX?
+  players_table: mmo_characters
   item_template: item_template
   quest_template: quest_template
   creature_template: creature_template
   loot_template: loot_template
-  string_template: string_template
+  string_template: mmo_string_template

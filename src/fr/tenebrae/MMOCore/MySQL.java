@@ -5,7 +5,6 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 import org.bukkit.plugin.Plugin;
-
 import com.mysql.jdbc.exceptions.jdbc4.CommunicationsException;
 
 public class MySQL extends Database {
