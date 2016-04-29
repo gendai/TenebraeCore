@@ -22,7 +22,7 @@ public class CacheHandler {
 	
 	public static File cacheFolder;
 	
-	public void create() throws JSONException, IOException {
+	public static void create() throws JSONException, IOException {
 		File dataFolder = Main.plugin.getDataFolder();
 		
 		if (!dataFolder.exists()) {
@@ -88,7 +88,7 @@ public class CacheHandler {
 		Main.plugin.getLogger().info("All skins have been generated.");
 	}
 
-	private void processImg(int[] skinRef) {
+	private static void processImg(int[] skinRef) {
 		try {
 			ArrayList<SkinSection> sections = SkinManager.getSkins();
 			File[] imgs = new File[skinRef.length];
@@ -117,7 +117,7 @@ public class CacheHandler {
 		
 	}
 
-	private int[] incrementRef(int[] skinRef) throws Exception {
+	private static int[] incrementRef(int[] skinRef) throws Exception {
 		ArrayList<SkinSection> sections = SkinManager.getSkins();
 		int max;
 		for (int i=0;i<skinRef.length;i++) {
