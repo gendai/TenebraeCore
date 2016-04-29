@@ -12,7 +12,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.inventivetalent.nicknamer.api.NickNamerAPI;
 
 import com.gmail.filoghost.holographicdisplays.api.Hologram;
 import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
@@ -23,6 +22,7 @@ import com.gmail.filoghost.holographicdisplays.api.line.TextLine;
 import fr.tenebrae.MMOCore.Main;
 import fr.tenebrae.MMOCore.SQLResultSet;
 import fr.tenebrae.MMOCore.Mechanics.MMOClass;
+import fr.tenebrae.MMOCore.Utils.NicknameAPI;
 import fr.tenebrae.MMOCore.Utils.SQLHelper;
 import fr.tenebrae.PlayerLanguage.LanguageAPI;
 
@@ -178,8 +178,13 @@ public class LoginScreen {
 		new BukkitRunnable() {
 			@Override
 			public void run() {
-				NickNamerAPI.getNickManager().setNick(p.getUniqueId(), selectedChar);
+				try {
+					NicknameAPI.applyNick(p, selectedChar);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		}.runTaskLaterAsynchronously(Main.plugin, 20L);
 	}
 }
+

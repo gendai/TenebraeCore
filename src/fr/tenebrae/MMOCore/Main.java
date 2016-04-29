@@ -1,9 +1,7 @@
 package fr.tenebrae.MMOCore;
 
-import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +19,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.json.JSONException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -42,8 +41,10 @@ import fr.tenebrae.MMOCore.Characters.Character;
 import fr.tenebrae.MMOCore.Chat.ChatManager;
 import fr.tenebrae.MMOCore.Entities.CEntityTypes;
 import fr.tenebrae.MMOCore.Items.ItemRegistry;
+import fr.tenebrae.MMOCore.Skin.CacheHandler;
 import fr.tenebrae.MMOCore.Utils.NamePlatesAPI;
 import fr.tenebrae.MMOCore.Utils.TranslatedString;
+import fr.tenebrae.TenebraeDB.DbManager;
 
 public class Main extends JavaPlugin {
 
@@ -69,7 +70,7 @@ public class Main extends JavaPlugin {
 	public static String DB_STRING_TEMPLATE;
 	public static String DB_XP_TEMPLATE;
 
-	public DataSource ds;
+	public static DbManager db;
 	public BungeeMessageReceiver bmr;
 	public ProtocolManager protocolManager;
 
@@ -93,11 +94,7 @@ public class Main extends JavaPlugin {
 		DB_STRING_TEMPLATE = config.getString("sql.string_template");
 		DB_XP_TEMPLATE = config.getString("sql.xp_template");
 
-		try {
-			ds = DataSource.getInstance();
-		} catch (IOException | SQLException | PropertyVetoException e) {
-			e.printStackTrace();
-		}
+		Main.db = fr.tenebrae.TenebraeDB.Main.getApi();
 		plugin = this;
 		log = this.getLogger();
 		protocolManager = ProtocolLibrary.getProtocolManager();
@@ -115,7 +112,16 @@ public class Main extends JavaPlugin {
 		initEntitiesTranslator();
 
 		new ChatManager().init(chatConfig);
-
+		new BukkitRunnable() {
+			@Override
+			public void run() {
+				try {
+					CacheHandler.create();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}.runTaskAsynchronously(this);
 
 		new BukkitRunnable() {
 			@Override
