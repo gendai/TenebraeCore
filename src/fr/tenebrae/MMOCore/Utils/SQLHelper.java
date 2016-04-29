@@ -27,20 +27,9 @@ public class SQLHelper {
 	}
 	
 	public static SQLResultSet querySQL(String request) throws SQLException {
-		Connection conn = null;
-		Statement stmt = null;
-		try {
-			conn = Main.db.getmysql();
-			stmt = conn.createStatement();
-			return new SQLResultSet(conn, stmt, stmt.executeQuery(request));
-		} catch (SQLException e) {
-			throw e;
-		} finally {
-			if (stmt != null)
-				stmt.close();
-			if (conn != null)
-				conn.close();
-		}
+		Connection conn = Main.db.getmysql();
+		Statement stmt = conn.createStatement();
+		return new SQLResultSet(conn, stmt, stmt.executeQuery(request));
 	}
 	
 	
