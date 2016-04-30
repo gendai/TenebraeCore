@@ -47,6 +47,8 @@ public interface ICreature {
 	public double getCriticalChance();
 	public double getArmor();
 	public double getMagicalArmor();
+	public int getNameId();
+	public int getSubNameId();
 
 	public void onTickBefore();
 	public void onTickAfter();

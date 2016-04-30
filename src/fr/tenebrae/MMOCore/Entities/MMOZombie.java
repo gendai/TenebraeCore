@@ -48,8 +48,6 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import fr.tenebrae.MMOCore.Main;
-import fr.tenebrae.MMOCore.Entities.Events.MMODeathEvent;
-import fr.tenebrae.MMOCore.Entities.MMOEntities.L10AlphaTestZombie;
 import fr.tenebrae.MMOCore.Entities.Pathfinders.PathfinderGoalRandomStroll;
 import fr.tenebrae.MMOCore.Items.Item;
 import fr.tenebrae.MMOCore.Mechanics.Damage;
@@ -228,7 +226,6 @@ public class MMOZombie extends EntityZombie implements ICreature {
 			if (!((Player)(((EntityPlayer)target).getBukkitEntity())).isOnline()) {
 				this.target = null;
 			}
-			Bukkit.getPluginManager().callEvent(new MMODeathEvent(L10AlphaTestZombie.class, (Player)(((EntityPlayer)target).getBukkitEntity())));
 		}
 		this.getBEntity().addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 100, 10, true, false));
 		this.getBEntity().addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 100, -10, true, false));
@@ -284,7 +281,7 @@ public class MMOZombie extends EntityZombie implements ICreature {
 		this.aggroList.put(damager, (int) (amount*aggroMultiplier) + aggroCount);
 		this.health -= amount;
 		this.lastDamager = damager;
-		this.bossBar.setProgress(this.health/this.maxHealth);
+		this.bossBar.setProgress(this.health/this.maxHealth >= 0 ? this.health/this.maxHealth : 0);
 		onDamaged(damager, amount);
 		return true;
 	}
@@ -722,5 +719,16 @@ public class MMOZombie extends EntityZombie implements ICreature {
 	public void onSpawn() {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public int getNameId() {
+		return nameId;
+	}
+
+	@Override
+	public int getSubNameId() {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 }

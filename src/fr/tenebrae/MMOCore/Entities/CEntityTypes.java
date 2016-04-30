@@ -1,6 +1,7 @@
 package fr.tenebrae.MMOCore.Entities;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -15,32 +16,39 @@ import net.minecraft.server.v1_9_R1.EntityZombie;
 import org.bukkit.entity.EntityType;
 
 import fr.tenebrae.MMOCore.Entities.MMOEntities.L01MineSpider;
-import fr.tenebrae.MMOCore.Entities.MMOEntities.L01NpcTest;
 import fr.tenebrae.MMOCore.Entities.MMOEntities.L02MineBroodMother;
 import fr.tenebrae.MMOCore.Entities.MMOEntities.L10AlphaTestZombie;
 import fr.tenebrae.MMOCore.Entities.MMOEntities.L17NivlasSpider;
+import fr.tenebrae.MMOCore.Entities.MMOEntities.L01NpcTest;
 
 public enum CEntityTypes {
 
-	L01MineSpider("L01MineSpider", 59, EntityType.CAVE_SPIDER, EntityCaveSpider.class, L01MineSpider.class),
-	L02MineBroodMother("L02MineBroodMother", 52, EntityType.SPIDER, EntityCaveSpider.class, L02MineBroodMother.class),
-	L10AlphaTestZombie("L10AlphaTestZombie", 54, EntityType.ZOMBIE, EntityZombie.class, L10AlphaTestZombie.class),
-	L17NivlasSpider("L17NivlasSpider", 59, EntityType.CAVE_SPIDER, EntityCaveSpider.class, L17NivlasSpider.class),
-	L01NpcTest("L01NpcTest", 120, EntityType.VILLAGER, EntityVillager.class, L01NpcTest.class);
+	L01MineSpider("L01MineSpider", 59, EntityType.CAVE_SPIDER, EntityCaveSpider.class, L01MineSpider.class, 300000),
+	L02MineBroodMother("L02MineBroodMother", 52, EntityType.SPIDER, EntityCaveSpider.class, L02MineBroodMother.class, 300001),
+	L10AlphaTestZombie("L10AlphaTestZombie", 54, EntityType.ZOMBIE, EntityZombie.class, L10AlphaTestZombie.class, 300003),
+	L17NivlasSpider("L17NivlasSpider", 59, EntityType.CAVE_SPIDER, EntityCaveSpider.class, L17NivlasSpider.class, 300002),
+	L01NpcTest("L01NpcTest",120,EntityType.VILLAGER, EntityVillager.class, L01NpcTest.class, 300003);
 	
 	private String name;
 	private int id;
 	private EntityType entityType;
 	private Class<? extends EntityInsentient> nmsClass;
 	private Class<? extends EntityInsentient> customClass;
+	private int nameId;
+	private static Map<Class<? extends EntityInsentient>, Integer> REGISTRY = new HashMap<Class<? extends EntityInsentient>, Integer>();
 	 
-	private CEntityTypes(/*The name of the NMS entity*/String name, /*The entity id*/int id, /*The entity type*/EntityType entityType, /*The origional NMS class*/ Class<? extends EntityInsentient> nmsClass, /*The custom class*/ Class<? extends EntityInsentient> customClass) {
+	private CEntityTypes(String name, int id, EntityType entityType, Class<? extends EntityInsentient> nmsClass, Class<? extends EntityInsentient> customClass, int nameId) {
 		this.name = name;
 		this.id = id;
 		this.entityType = entityType;
 		this.nmsClass = nmsClass;
 		this.customClass = customClass;
-		
+		this.nameId = nameId;
+	}
+	
+	public static int getId(Class<? extends EntityInsentient> clazz) {
+		if (REGISTRY.containsKey(clazz)) return REGISTRY.get(clazz);
+		else return 0;
 	}
 	 
 	public String getName() {
@@ -63,11 +71,11 @@ public enum CEntityTypes {
 		return customClass;
 	}
 	
-	/*Register our entities to the server, add to onEnable()*/
 	public static void registerEntities() {
-		for (CEntityTypes entity : values()) /*Get our entities*/
-		a(entity.getCustomClass(), entity.getName(), entity.getID());
-		/*Get all biomes on the server*/
+		for (CEntityTypes entity : values()) {
+			a(entity.getCustomClass(), entity.getName(), entity.getID());
+			REGISTRY.put(entity.getCustomClass(), entity.getNameId());
+		}
 		BiomeBase[] biomes;
 		try {
 		biomes = (BiomeBase[]) getPrivateStatic(BiomeBase.class, "biomes");
@@ -77,7 +85,7 @@ public enum CEntityTypes {
 		for (BiomeBase biomeBase : biomes) {
 		if (biomeBase == null)
 		break;
-		for (String field : new String[] { "at", "au", "av", "aw" }) //Lists that hold all entity types
+		for (String field : new String[] { "at", "au", "av", "aw" })
 		try {
 		Field list = BiomeBase.class.getDeclaredField(field);
 		list.setAccessible(true);
@@ -86,19 +94,17 @@ public enum CEntityTypes {
 		 
 		for (BiomeMeta meta : mobList)
 		for (CEntityTypes entity : values())
-		if (entity.getNMSClass().equals(meta.b)) /*Test if the entity has the custom entity type*/
-		meta.b = entity.getCustomClass(); //Set it's meta to our custom class's meta
+		if (entity.getNMSClass().equals(meta.b))
+		meta.b = entity.getCustomClass();
 		} catch (Exception e) {
 		e.printStackTrace();
 		}
 		}
 	}
 	
-	/*Method(add to onDisable()) to prevent server leaks when the plugin gets disabled*/
 	@SuppressWarnings("rawtypes")
 	public static void unregisterEntities() {
 		for (CEntityTypes entity : values()) {
-			// Remove our class references.
 			try { ((Map) getPrivateStatic(EntityTypes.class, "d")).remove(entity.getCustomClass()); }
 			catch (Exception e) { e.printStackTrace(); }
 		 
@@ -116,7 +122,7 @@ public enum CEntityTypes {
 		 
 		BiomeBase[] biomes;
 		try {
-			biomes = (BiomeBase[]) getPrivateStatic(BiomeBase.class, "biomes"); /*Get all biomes again*/
+			biomes = (BiomeBase[]) getPrivateStatic(BiomeBase.class, "biomes");
 		} catch (Exception exc) {
 			return;
 		}
@@ -138,7 +144,6 @@ public enum CEntityTypes {
 		}
 	}
 	
-	/*A little Util for getting a private field*/
 	@SuppressWarnings("rawtypes")
 	private static Object getPrivateStatic(Class clazz, String f) throws Exception {
 		Field field = clazz.getDeclaredField(f);
@@ -147,7 +152,6 @@ public enum CEntityTypes {
 	
 	}
 	
-	/*Set data into the entitytypes class from NMS*/
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private static void a(Class paramClass, String paramString, int paramInt) {
 		try {
@@ -159,5 +163,9 @@ public enum CEntityTypes {
 		} catch (Exception exc) {
 			exc.printStackTrace();
 		}
+	}
+
+	public int getNameId() {
+		return nameId;
 	}
 }

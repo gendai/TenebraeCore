@@ -727,4 +727,15 @@ public class MMOSpider extends EntityCaveSpider	 implements ICreature {
 		// TODO Auto-generated method stub
 		
 	}
+
+	@Override
+	public int getNameId() {
+		return nameId;
+	}
+
+	@Override
+	public int getSubNameId() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 }

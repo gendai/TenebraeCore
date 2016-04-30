@@ -1,15 +1,30 @@
 package fr.tenebrae.MMOCore.Entities.MMOEntities;
 
 import java.util.Random;
+import java.util.Map.Entry;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.craftbukkit.v1_9_R1.CraftWorld;
+import org.bukkit.craftbukkit.v1_9_R1.entity.CraftPlayer;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scheduler.BukkitRunnable;
 
+import fr.tenebrae.MMOCore.Main;
 import fr.tenebrae.MMOCore.Entities.MMOZombie;
+import fr.tenebrae.MMOCore.Entities.Events.MMODeathEvent;
+import fr.tenebrae.MMOCore.Items.Item;
 import fr.tenebrae.MMOCore.Items.ItemRegistry;
 import fr.tenebrae.MMOCore.Items.Coins.CopperCoin;
 import fr.tenebrae.MMOCore.Items.Coins.GoldCoin;
 import fr.tenebrae.MMOCore.Items.Coins.SilverCoin;
+import fr.tenebrae.MMOCore.Mechanics.Sound;
+import net.minecraft.server.v1_9_R1.EntityPlayer;
+import net.minecraft.server.v1_9_R1.EnumParticle;
+import net.minecraft.server.v1_9_R1.SoundCategory;
 
 public class L10AlphaTestZombie extends MMOZombie {
 
@@ -55,5 +70,53 @@ public class L10AlphaTestZombie extends MMOZombie {
 		
 		this.clearGoals();
 		this.setupGoals();
+	}
+	
+	@Override
+	public void onDeath(){
+		if (this.isDead) return;
+		if (this.target instanceof EntityPlayer) {
+			if (!((Player)(((EntityPlayer)target).getBukkitEntity())).isOnline()) {
+				this.target = null;
+			}
+		}
+		Bukkit.getPluginManager().callEvent(new MMODeathEvent(L10AlphaTestZombie.class, (Player)(((EntityPlayer)target).getBukkitEntity())));
+		this.getBEntity().addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 100, 10, true, false));
+		this.getBEntity().addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 100, -10, true, false));
+		new Sound(this.deathSound, SoundCategory.HOSTILE).setLoc(this.getLocation()).setPitch(1.26F).play();
+		this.world.broadcastEntityEffect(this, (byte) 3);
+		if (this.lastDamager instanceof EntityPlayer) {
+			fr.tenebrae.MMOCore.Characters.Character c = Main.connectedCharacters.get(((Player)CraftPlayer.getEntity(this.world.getServer(), this.lastDamager)));
+			if (c.getLevel()-this.level < 6) c.addXp(this.givenXp);
+		}
+		this.isDead = true;
+		new BukkitRunnable() {
+			@Override
+			public void run() {
+				final Location loc = getLocation();
+				dead = true;
+				bossBar.setVisible(false);
+				if (!drops.isEmpty()) {
+					for (Entry<Item,Double> entry : drops.entrySet()) {
+						if ((double)(new Random().nextInt(10000))/100 <= entry.getValue()) {
+							final ItemStack is = entry.getKey().getItemStack();
+							new BukkitRunnable() {
+								@Override
+								public void run() {
+									loc.getWorld().dropItemNaturally(loc, is);
+								}
+							}.runTask(Main.plugin);
+						}
+					}
+				}
+				for (int i = 0; i < 20; i++) {
+					double d0 = random.nextGaussian() * 0.02D;
+					double d1 = random.nextGaussian() * 0.02D;
+					double d2 = random.nextGaussian() * 0.02D;
+
+					world.addParticle(EnumParticle.EXPLOSION_NORMAL, locX + random.nextFloat() * width * 2.0F - width, locY + random.nextFloat() * length, locZ + random.nextFloat() * width * 2.0F - width, d0, d1, d2, new int[0]);
+				}
+			}
+		}.runTaskLaterAsynchronously(Main.plugin, 1L);
 	}
 }

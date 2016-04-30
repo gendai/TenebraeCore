@@ -237,7 +237,7 @@ private void openQuestDiary(Player player){
 		if(quests.size() > 0){
 			for(Quest q : quests){
 				if(!q.getFinished()){
-					invBooksQuest.addItem(q.getWrittenBook());
+					invBooksQuest.addItem(q.getWrittenBook(player));
 				}
 			}
 		}
@@ -266,7 +266,7 @@ public void onClick(InventoryClickEvent e){
 				if(quests.size() > 0){
 					for(Quest q : quests){
 						if(!q.getFinished()){
-							invBooksQuest.addItem(q.getWrittenBook());
+							invBooksQuest.addItem(q.getWrittenBook((Player)e.getWhoClicked()));
 						}
 					}
 				}
@@ -275,14 +275,14 @@ public void onClick(InventoryClickEvent e){
 		}
 	}else if(e.getInventory().getTitle().equals(ChatColor.GOLD+"Quests List")){
 		e.setCancelled(true);
-		Quest quest = questFromBookMeta(e.getCurrentItem().getItemMeta());
+		Quest quest = questFromBookMeta(e.getCurrentItem().getItemMeta(),(Player)e.getWhoClicked());
 		quest.informUpdate((Player)e.getWhoClicked());
 	}
 }
 
-public Quest questFromBookMeta(ItemMeta bookMeta){
+public Quest questFromBookMeta(ItemMeta bookMeta, Player player){
 	for(Quest q : quests){
-		ItemMeta qmeta = q.getWrittenBook().getItemMeta();
+		ItemMeta qmeta = q.getWrittenBook(player).getItemMeta();
 		if(qmeta.getDisplayName().equals(bookMeta.getDisplayName())){
 			return q;
 		}

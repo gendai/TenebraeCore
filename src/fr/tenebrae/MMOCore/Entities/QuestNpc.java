@@ -52,6 +52,7 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 	public Location spawn;
 	public boolean resetting = false;
 	public boolean isDead = false;
+	public int nameId = 5000;
 
 	public double walkSpeed = 0D;
 	public double sprintSpeed = 0D;
@@ -63,11 +64,11 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 	public String deathSound = "mob.villager.death";
 
 	@Override
-	public Inventory openFinishedQuestGui(){
+	public Inventory openFinishedQuestGui(Player player){
 		Inventory inv = Bukkit.createInventory(null, 9*5, ChatColor.GOLD + "Fnished Quests");
 		for(Quest q : quests){
 			if(q.getFinished()){
-				inv.addItem(q.getWrittenBook());
+				inv.addItem(q.getWrittenBook(player));
 			}
 		}
 		ItemStack panback = new ItemStack(Material.SIGN);
@@ -86,11 +87,11 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 	}
 
 	@Override
-	public Inventory openPendingQuestGui(){
+	public Inventory openPendingQuestGui(Player player){
 		Inventory inv = Bukkit.createInventory(null, 9*5, ChatColor.GOLD + "Pending Quests");
 		for(Quest q : Listeners.quests/*Will be player.quests*/){
 			if(!q.getFinished()){
-				inv.addItem(q.getWrittenBook());
+				inv.addItem(q.getWrittenBook(player));
 			}
 		}
 		ItemStack panback = new ItemStack(Material.SIGN);
@@ -113,7 +114,7 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 		Inventory inv = Bukkit.createInventory(null, 9*5, ChatColor.GOLD + "Available Quests");
 		for(Quest q : quests){
 			if(q.canHaveQuest(player) && !Listeners.quests.contains(q)){
-				inv.addItem(q.getWrittenBook());
+				inv.addItem(q.getWrittenBook(player));
 			}
 		}
 		ItemStack panback = new ItemStack(Material.SIGN);
@@ -136,15 +137,15 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 		if(e.getInventory().getTitle().equals(ChatColor.GOLD + "Available Quests")){
 			e.setCancelled(true);
 			if(e.getSlot() == 36){
-				e.getWhoClicked().openInventory(openFinishedQuestGui());
+				e.getWhoClicked().openInventory(openFinishedQuestGui((Player)e.getWhoClicked()));
 			}else if(e.getSlot() == 44){
-				e.getWhoClicked().openInventory(openPendingQuestGui());
+				e.getWhoClicked().openInventory(openPendingQuestGui((Player)e.getWhoClicked()));
 			}else if(e.getCurrentItem().getType().equals(Material.BOOK)){
 				ItemMeta qmeta = e.getCurrentItem().getItemMeta();
 				if(e.getClick().equals(ClickType.RIGHT)){
 				}else if(e.getClick().equals(ClickType.LEFT)){
-					e.getWhoClicked().sendMessage("NPC say: "+questFromBookMeta(qmeta).getDescription());
-					Quest quest = questFromBookMeta(qmeta);
+					e.getWhoClicked().sendMessage("NPC say: "+questFromBookMeta(qmeta, (Player)e.getWhoClicked()).getDescription());
+					Quest quest = questFromBookMeta(qmeta, (Player)e.getWhoClicked());
 					giveQuest(quest, (Player)e.getWhoClicked());
 					e.getInventory().setItem(e.getSlot(), null);
 				}
@@ -154,12 +155,12 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 			if(e.getSlot() == 36){
 				e.getWhoClicked().openInventory(openAvailableQuestGui((Player)e.getWhoClicked()));
 			}else if(e.getSlot() == 44){
-				e.getWhoClicked().openInventory(openFinishedQuestGui());
+				e.getWhoClicked().openInventory(openFinishedQuestGui((Player)e.getWhoClicked()));
 			}else if(e.getCurrentItem().getType().equals(Material.BOOK)){
 				ItemMeta qmeta = e.getCurrentItem().getItemMeta();
 				if(e.getClick().equals(ClickType.RIGHT)){
 				}else if(e.getClick().equals(ClickType.LEFT)){
-					Quest quest = questFromBookMeta(qmeta);
+					Quest quest = questFromBookMeta(qmeta, (Player)e.getWhoClicked());
 					if(quest.isDone((Player)e.getWhoClicked())){
 						e.getWhoClicked().sendMessage(ChatColor.GREEN+"You have completed the Quest: "+quest.getTitle());
 						e.getInventory().setItem(e.getSlot(), null);
@@ -171,16 +172,16 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 		}else if(e.getInventory().getTitle().equals(ChatColor.GOLD + "Fnished Quests")){
 			e.setCancelled(true);
 			if(e.getSlot() == 36){
-				e.getWhoClicked().openInventory(openPendingQuestGui());
+				e.getWhoClicked().openInventory(openPendingQuestGui((Player)e.getWhoClicked()));
 			}else if(e.getSlot() == 44){
 				e.getWhoClicked().openInventory(openAvailableQuestGui((Player)e.getWhoClicked()));
 			}
 		}
 	}
 
-	public Quest questFromBookMeta(ItemMeta bookMeta){
+	public Quest questFromBookMeta(ItemMeta bookMeta, Player player){
 		for(Quest q : quests){
-			ItemMeta qmeta = q.getWrittenBook().getItemMeta();
+			ItemMeta qmeta = q.getWrittenBook(player).getItemMeta();
 			if(qmeta.getDisplayName().equals(bookMeta.getDisplayName())){
 				return q;
 			}
@@ -500,6 +501,17 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 	public void onSpawn() {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public int getNameId() {
+		return nameId;
+	}
+
+	@Override
+	public int getSubNameId() {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 
 }

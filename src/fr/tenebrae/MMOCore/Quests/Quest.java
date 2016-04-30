@@ -1,7 +1,6 @@
 package fr.tenebrae.MMOCore.Quests;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import org.bukkit.Material;
 import org.bukkit.craftbukkit.v1_9_R1.inventory.CraftItemStack;
@@ -9,11 +8,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import fr.tenebrae.MMOCore.Utils.EntityNameConverter;
+import fr.tenebrae.MMOCore.Main;
+import fr.tenebrae.MMOCore.Entities.CEntityTypes;
+import fr.tenebrae.MMOCore.Utils.TranslatedString;
 import net.md_5.bungee.api.ChatColor;
+import net.minecraft.server.v1_9_R1.EntityInsentient;
 import net.minecraft.server.v1_9_R1.NBTTagCompound;
-import net.minecraft.server.v1_9_R1.NBTTagList;
-import net.minecraft.server.v1_9_R1.NBTTagString;
 
 public class Quest {
 
@@ -107,40 +107,31 @@ public class Quest {
 	}
 
 
-	public ItemStack getWrittenBook(){
-		EntityNameConverter enc = new EntityNameConverter();
+	@SuppressWarnings("unchecked")
+	public ItemStack getWrittenBook(Player player){
 		ItemStack writtenBook = new ItemStack(Material.BOOK);
 		net.minecraft.server.v1_9_R1.ItemStack nmsis = CraftItemStack.asNMSCopy(writtenBook);
-		List<String> pages = new ArrayList<String>();
 		String condi = "";
 		for(QuestCondition qc : conditions){
 			condi += qc.getType().toString()+" "+qc.getData0().toString()+", ";
 		}
 		condi = condi.substring(0, condi.length()-2);
-		pages.add("Conditions: "+condi);
 		String obj = "";
 		for(QuestObjective  qo : objectives){
 			if(qo.getType().equals(QuestObjective.ObjectiveType.KILL)){
-				obj += qo.getType().toString()+" "+enc.toString(qo.getData0())+" "+qo.getData1().toString()+", ";
+				obj += qo.getType().toString()+" "+TranslatedString.getString(CEntityTypes.getId((Class<? extends EntityInsentient>)qo.getData0()), Main.connectedCharacters.get(player).getLanguage())+" "+qo.getData1().toString()+", ";
 			}else if(qo.getType().equals(QuestObjective.ObjectiveType.DISCOVER)){
 				obj += qo.getType().toString()+" "+qo.getData0().toString()+", ";
 			}
 		}
 		obj = obj.substring(0, obj.length()-2);
-		pages.add("Objectives: "+obj);
 		String rewa = "";
 		for(QuestReward qr : reward){
 			rewa += qr.getType().toString()+" "+qr.getData0().toString()+", ";
 		}
 		rewa = rewa.substring(0, rewa.length()-2);
-		pages.add("Rewards: "+rewa);
 		NBTTagCompound bd = new NBTTagCompound();
 		bd.setString("title", this.getTitle());
-		NBTTagList bp = new NBTTagList();
-		for(String text : pages) {
-			bp.add(new NBTTagString(text));
-		}
-		bd.set("pages", bp);
 		nmsis.setTag(bd);
 		writtenBook = CraftItemStack.asBukkitCopy(nmsis);
 		ItemMeta meta = writtenBook.getItemMeta();
@@ -168,17 +159,17 @@ public class Quest {
 		this.title = title;
 	}
 
+	@SuppressWarnings("unchecked")
 	public void informUpdate(Player player){
-		EntityNameConverter enc = new EntityNameConverter();
 		String[] s = new String[objectives.size()+1];
 		for(int i = 0; i < objectives.size(); i++){
 			switch(objectives.get(i).getType()){
 			case KILL:
 				KillCounter kc = (KillCounter)objectives.get(i).getData2();
 				if(kc.getCount() >= (int)objectives.get(i).getData1()){
-					s[i] = ChatColor.GOLD+"[Quest]"+this.title+ChatColor.GREEN+": Kill "+enc.toString(objectives.get(i).getData0())+" "+kc.getCount()+"/"+objectives.get(i).getData1();
+					s[i] = ChatColor.GOLD+"[Quest]"+this.title+ChatColor.GREEN+": Kill "+TranslatedString.getString(CEntityTypes.getId((Class<? extends EntityInsentient>)objectives.get(i).getData0()), Main.connectedCharacters.get(player).getLanguage())+" "+kc.getCount()+"/"+objectives.get(i).getData1();
 				}else{
-					s[i] = ChatColor.GOLD+"[Quest]"+this.title+ChatColor.RED+": Kill "+enc.toString(objectives.get(i).getData0())+" "+kc.getCount()+"/"+objectives.get(i).getData1();
+					s[i] = ChatColor.GOLD+"[Quest]"+this.title+ChatColor.RED+": Kill "+TranslatedString.getString(CEntityTypes.getId((Class<? extends EntityInsentient>)objectives.get(i).getData0()), Main.connectedCharacters.get(player).getLanguage())+" "+kc.getCount()+"/"+objectives.get(i).getData1();
 				}
 				break;
 			case DISCOVER:

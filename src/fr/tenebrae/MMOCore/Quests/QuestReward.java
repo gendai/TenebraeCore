@@ -24,7 +24,7 @@ public class QuestReward {
 	public void giveReward(Player player){
 		switch(type){
 			case XP:
-				player.giveExp((int)data0);
+				Main.connectedCharacters.get(player).addXp((int)data0);
 				break;
 			case MONEY:
 				Character ch = Main.connectedCharacters.get(player);

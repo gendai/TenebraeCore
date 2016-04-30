@@ -12,6 +12,6 @@ public interface IClickable {
 	
 	public void onInteract(Character clicker, Item nomItem, double distance);
 	public Inventory openAvailableQuestGui(Player player);
-	public Inventory openFinishedQuestGui();
-	public Inventory openPendingQuestGui();
+	public Inventory openFinishedQuestGui(Player player);
+	public Inventory openPendingQuestGui(Player player);
 }
