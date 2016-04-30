@@ -59,7 +59,7 @@ public class ChatHandler implements Listener,CommandExecutor {
     public void sendMessage(ChatChannel channel, String message, Player sender) {
     	if (!Main.connectedCharacters.containsKey(sender)) return;
         Set<Player> recipients = channel.getRecipients(sender.getLocation());
-        message = StringParser.parse(sender, channel.getPattern()).replaceAll("\\{MSG\\}", message).replaceAll("\\{Player\\}", Main.connectedCharacters.get(sender).getCharacterName());
+        message = StringParser.parse(sender, channel.getPattern()).replaceAll("\\{MSG\\}", message);
 
         for (Player player: recipients) {
             player.sendMessage(message);
