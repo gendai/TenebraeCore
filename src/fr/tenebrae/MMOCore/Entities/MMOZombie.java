@@ -48,6 +48,8 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import fr.tenebrae.MMOCore.Main;
+import fr.tenebrae.MMOCore.Entities.Events.MMODeathEvent;
+import fr.tenebrae.MMOCore.Entities.MMOEntities.L10AlphaTestZombie;
 import fr.tenebrae.MMOCore.Entities.Pathfinders.PathfinderGoalRandomStroll;
 import fr.tenebrae.MMOCore.Items.Item;
 import fr.tenebrae.MMOCore.Mechanics.Damage;
@@ -226,6 +228,7 @@ public class MMOZombie extends EntityZombie implements ICreature {
 			if (!((Player)(((EntityPlayer)target).getBukkitEntity())).isOnline()) {
 				this.target = null;
 			}
+			Bukkit.getPluginManager().callEvent(new MMODeathEvent(L10AlphaTestZombie.class, (Player)(((EntityPlayer)target).getBukkitEntity())));
 		}
 		this.getBEntity().addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 100, 10, true, false));
 		this.getBEntity().addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 100, -10, true, false));

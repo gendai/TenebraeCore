@@ -1,6 +1,6 @@
 package fr.tenebrae.MMOCore.Utils;
 
-import org.bukkit.craftbukkit.v1_9_R1.entity.CraftZombie;
+import fr.tenebrae.MMOCore.Entities.MMOEntities.L10AlphaTestZombie;
 
 public class EntityNameConverter {
 	
@@ -8,7 +8,7 @@ public class EntityNameConverter {
 	}
 
 	public String toString(Object o){
-		if(o.equals(CraftZombie.class)){
+		if(o.equals(L10AlphaTestZombie.class)){
 			return "Zombie";
 		}else{
 			return "";
@@ -18,7 +18,7 @@ public class EntityNameConverter {
 	public Object getClass(String s){
 		switch(s){
 		case "zombie":
-			return CraftZombie.class;
+			return L10AlphaTestZombie.class;
 		default:
 			return null;
 		}

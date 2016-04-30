@@ -16,7 +16,7 @@ import net.minecraft.server.v1_9_R1.NBTTagList;
 import net.minecraft.server.v1_9_R1.NBTTagString;
 
 public class Quest {
-	
+
 	private String title;
 	private String description;
 	private String niveauQuete;
@@ -27,7 +27,7 @@ public class Quest {
 	private ArrayList<QuestReward> reward = new ArrayList<>();
 	private boolean finished = false;
 	public boolean completed = false;
-	
+
 	public Quest(String title, String description, String niveauQuest, int idNom, int idDescritpion,ArrayList<QuestObjective> objs, ArrayList<QuestCondition> conditions, ArrayList<QuestReward> rewards)
 	{
 		this.title = title;
@@ -39,7 +39,7 @@ public class Quest {
 		this.idNom = idNom;
 		this.idDescription = idDescritpion;
 	}
-	
+
 	public boolean isDone(Player player){
 		for(QuestObjective obj : objectives){
 			if(!obj.isCompleted()){
@@ -52,7 +52,7 @@ public class Quest {
 		this.finished = true;
 		return true;
 	}
-	
+
 	public boolean canHaveQuest(Player player){
 		for(QuestCondition con : conditions){
 			if(!con.isAuthorize(player)){
@@ -61,15 +61,15 @@ public class Quest {
 		}
 		return true;
 	}
-	
+
 	public boolean getFinished(){
 		return this.finished;
 	}
-	
+
 	public void setFinished(boolean b){
 		this.finished = b;
 	}
-	
+
 	public ArrayList<QuestReward> getRewards(){
 		return this.reward;
 	}
@@ -106,7 +106,7 @@ public class Quest {
 		return conditions;
 	}
 
-	
+
 	public ItemStack getWrittenBook(){
 		EntityNameConverter enc = new EntityNameConverter();
 		ItemStack writtenBook = new ItemStack(Material.BOOK);
@@ -121,7 +121,7 @@ public class Quest {
 		String obj = "";
 		for(QuestObjective  qo : objectives){
 			if(qo.getType().equals(QuestObjective.ObjectiveType.KILL)){
-			obj += qo.getType().toString()+" "+enc.toString(qo.getData0())+" "+qo.getData1().toString()+", ";
+				obj += qo.getType().toString()+" "+enc.toString(qo.getData0())+" "+qo.getData1().toString()+", ";
 			}else if(qo.getType().equals(QuestObjective.ObjectiveType.DISCOVER)){
 				obj += qo.getType().toString()+" "+qo.getData0().toString()+", ";
 			}
@@ -145,14 +145,14 @@ public class Quest {
 		writtenBook = CraftItemStack.asBukkitCopy(nmsis);
 		ItemMeta meta = writtenBook.getItemMeta();
 		ArrayList<String> lores = new ArrayList<>();
-		lores.add("§r");
+		lores.add("Â§r");
 		lores.add(ChatColor.GOLD+"Conditions: ");
 		lores.add(ChatColor.GRAY+"    "+condi);
-		lores.add("§r");
+		lores.add("Â§r");
 		lores.add(ChatColor.GOLD+"Objectif: ");
 		lores.add(ChatColor.GRAY+"    "+obj);
-		lores.add("§r");
-		lores.add(ChatColor.GOLD+"Récompenses: ");
+		lores.add("Â§r");
+		lores.add(ChatColor.GOLD+"RÃ©compenses: ");
 		lores.add(ChatColor.GRAY+"    "+rewa);
 		meta.setLore(lores);
 		meta.setDisplayName(this.title);
@@ -167,7 +167,7 @@ public class Quest {
 	public void setTitle(String title) {
 		this.title = title;
 	}
-	
+
 	public void informUpdate(Player player){
 		EntityNameConverter enc = new EntityNameConverter();
 		String[] s = new String[objectives.size()+1];
@@ -175,14 +175,18 @@ public class Quest {
 			switch(objectives.get(i).getType()){
 			case KILL:
 				KillCounter kc = (KillCounter)objectives.get(i).getData2();
-				s[i] = ChatColor.GOLD+"[Quest]"+this.title+": Kill "+enc.toString(objectives.get(i).getData0())+" "+kc.getCount()+"/"+objectives.get(i).getData1();
+				if(kc.getCount() >= (int)objectives.get(i).getData1()){
+					s[i] = ChatColor.GOLD+"[Quest]"+this.title+ChatColor.GREEN+": Kill "+enc.toString(objectives.get(i).getData0())+" "+kc.getCount()+"/"+objectives.get(i).getData1();
+				}else{
+					s[i] = ChatColor.GOLD+"[Quest]"+this.title+ChatColor.RED+": Kill "+enc.toString(objectives.get(i).getData0())+" "+kc.getCount()+"/"+objectives.get(i).getData1();
+				}
 				break;
 			case DISCOVER:
 				DiscoverCoord dc  = (DiscoverCoord)objectives.get(0).getData1();
 				if(dc.isArrived){
-					s[i] = ChatColor.GOLD+"[Quest]"+this.title+": You have discovered "+objectives.get(i).getData0();
+					s[i] = ChatColor.GOLD+"[Quest]"+this.title+ChatColor.GREEN+": You have discovered "+objectives.get(i).getData0();
 				}else{
-					s[i] = ChatColor.GOLD+"[Quest]"+this.title+": You didn't discovered "+objectives.get(i).getData0();
+					s[i] = ChatColor.GOLD+"[Quest]"+this.title+ChatColor.RED+": You didn't discovered "+objectives.get(i).getData0();
 				}
 				break;
 			default:

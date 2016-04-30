@@ -1,6 +1,8 @@
 package fr.tenebrae.MMOCore.Quests;
 
 import org.bukkit.entity.Player;
+import fr.tenebrae.MMOCore.Main;
+import fr.tenebrae.MMOCore.Characters.Character;
 
 public class QuestReward {
 
@@ -23,6 +25,10 @@ public class QuestReward {
 		switch(type){
 			case XP:
 				player.giveExp((int)data0);
+				break;
+			case MONEY:
+				Character ch = Main.connectedCharacters.get(player);
+				ch.money += (int)data0;
 				break;
 		default:
 			break;
