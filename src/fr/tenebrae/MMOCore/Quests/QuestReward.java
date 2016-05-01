@@ -11,7 +11,7 @@ public class QuestReward {
 	private Object data2;
 	private Object data3;
 	private RewardType type;
-	
+
 	public QuestReward(RewardType type, Object data0, Object data1, Object data2, Object data3)
 	{
 		this.type = type;
@@ -20,21 +20,21 @@ public class QuestReward {
 		this.data2 = data2;
 		this.data3 = data3;
 	}
-	
+
 	public void giveReward(Player player){
 		switch(type){
-			case XP:
-				Main.connectedCharacters.get(player).addXp((int)data0);
-				break;
-			case MONEY:
-				Character ch = Main.connectedCharacters.get(player);
-				ch.money += (int)data0;
-				break;
+		case XP:
+			Main.connectedCharacters.get(player).addXp((int)data0);
+			break;
+		case MONEY:
+			Character ch = Main.connectedCharacters.get(player);
+			ch.money += (int)data0;
+			break;
 		default:
 			break;
 		}
 	}
-	
+
 	public Object getData0() {
 		return data0;
 	}
@@ -74,8 +74,19 @@ public class QuestReward {
 	public void setType(RewardType type) {
 		this.type = type;
 	}
-	
+
 	public enum RewardType{
 		XP, MONEY, ITEM, SPELL
+	}
+
+	public int getTranslateId(RewardType type){
+		switch(type){
+		case XP:
+			return 70115;
+		case MONEY:
+			return 70116;
+		default:
+			return 0;
+		}
 	}
 }

@@ -27,6 +27,7 @@ import fr.tenebrae.MMOCore.Quests.Quest;
 import fr.tenebrae.MMOCore.Quests.QuestCondition;
 import fr.tenebrae.MMOCore.Quests.QuestObjective;
 import fr.tenebrae.MMOCore.Quests.QuestReward;
+import fr.tenebrae.MMOCore.Utils.TranslatedString;
 import net.minecraft.server.v1_9_R1.Entity;
 import net.minecraft.server.v1_9_R1.EntityHuman;
 import net.minecraft.server.v1_9_R1.EntityVillager;
@@ -65,7 +66,7 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 
 	@Override
 	public Inventory openFinishedQuestGui(Player player){
-		Inventory inv = Bukkit.createInventory(null, 9*5, ChatColor.GOLD + "Fnished Quests");
+		Inventory inv = Bukkit.createInventory(null, 9*5, ChatColor.GOLD + TranslatedString.getString(70125,player));
 		for(Quest q : quests){
 			if(q.getFinished()){
 				inv.addItem(q.getWrittenBook(player));
@@ -73,12 +74,12 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 		}
 		ItemStack panback = new ItemStack(Material.SIGN);
 		ItemMeta metaback = panback.getItemMeta();
-		metaback.setDisplayName(ChatColor.AQUA+"Previous");
+		metaback.setDisplayName(ChatColor.AQUA+TranslatedString.getString(70130, player));
 		panback.setItemMeta(metaback);
 
 		ItemStack panforw = new ItemStack(Material.SIGN);
 		ItemMeta metaforw = panforw.getItemMeta();
-		metaforw.setDisplayName(ChatColor.AQUA+"Next");
+		metaforw.setDisplayName(ChatColor.AQUA+TranslatedString.getString(70131,player));
 		panforw.setItemMeta(metaforw);
 
 		inv.setItem(36, panback);
@@ -88,7 +89,7 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 
 	@Override
 	public Inventory openPendingQuestGui(Player player){
-		Inventory inv = Bukkit.createInventory(null, 9*5, ChatColor.GOLD + "Pending Quests");
+		Inventory inv = Bukkit.createInventory(null, 9*5, ChatColor.GOLD + TranslatedString.getString(70126, player));
 		for(Quest q : Listeners.quests/*Will be player.quests*/){
 			if(!q.getFinished()){
 				inv.addItem(q.getWrittenBook(player));
@@ -96,12 +97,12 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 		}
 		ItemStack panback = new ItemStack(Material.SIGN);
 		ItemMeta metaback = panback.getItemMeta();
-		metaback.setDisplayName(ChatColor.AQUA+"Previous");
+		metaback.setDisplayName(ChatColor.AQUA+TranslatedString.getString(70130, player));
 		panback.setItemMeta(metaback);
 
 		ItemStack panforw = new ItemStack(Material.SIGN);
 		ItemMeta metaforw = panforw.getItemMeta();
-		metaforw.setDisplayName(ChatColor.AQUA+"Next");
+		metaforw.setDisplayName(ChatColor.AQUA+TranslatedString.getString(70131, player));
 		panforw.setItemMeta(metaforw);
 
 		inv.setItem(36, panback);
@@ -111,7 +112,7 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 
 	@Override
 	public Inventory openAvailableQuestGui(Player player){
-		Inventory inv = Bukkit.createInventory(null, 9*5, ChatColor.GOLD + "Available Quests");
+		Inventory inv = Bukkit.createInventory(null, 9*5, ChatColor.GOLD + TranslatedString.getString(70127, player));
 		for(Quest q : quests){
 			if(q.canHaveQuest(player) && !Listeners.quests.contains(q)){
 				inv.addItem(q.getWrittenBook(player));
@@ -119,12 +120,12 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 		}
 		ItemStack panback = new ItemStack(Material.SIGN);
 		ItemMeta metaback = panback.getItemMeta();
-		metaback.setDisplayName(ChatColor.AQUA+"Previous");
+		metaback.setDisplayName(ChatColor.AQUA+TranslatedString.getString(70130, player));
 		panback.setItemMeta(metaback);
 
 		ItemStack panforw = new ItemStack(Material.SIGN);
 		ItemMeta metaforw = panforw.getItemMeta();
-		metaforw.setDisplayName(ChatColor.AQUA+"Next");
+		metaforw.setDisplayName(ChatColor.AQUA+TranslatedString.getString(70131, player));
 		panforw.setItemMeta(metaforw);
 
 		inv.setItem(36, panback);
@@ -134,7 +135,7 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 
 	@EventHandler
 	public void onClick(InventoryClickEvent e){
-		if(e.getInventory().getTitle().equals(ChatColor.GOLD + "Available Quests")){
+		if(e.getInventory().getTitle().equals(ChatColor.GOLD + TranslatedString.getString(70127, (Player)e.getWhoClicked()))){
 			e.setCancelled(true);
 			if(e.getSlot() == 36){
 				e.getWhoClicked().openInventory(openFinishedQuestGui((Player)e.getWhoClicked()));
@@ -150,7 +151,7 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 					e.getInventory().setItem(e.getSlot(), null);
 				}
 			}
-		}else if(e.getInventory().getTitle().equals(ChatColor.GOLD + "Pending Quests")){
+		}else if(e.getInventory().getTitle().equals(ChatColor.GOLD + TranslatedString.getString(70126, (Player)e.getWhoClicked()))){
 			e.setCancelled(true);
 			if(e.getSlot() == 36){
 				e.getWhoClicked().openInventory(openAvailableQuestGui((Player)e.getWhoClicked()));
@@ -162,14 +163,14 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 				}else if(e.getClick().equals(ClickType.LEFT)){
 					Quest quest = questFromBookMeta(qmeta, (Player)e.getWhoClicked());
 					if(quest.isDone((Player)e.getWhoClicked())){
-						e.getWhoClicked().sendMessage(ChatColor.GREEN+"You have completed the Quest: "+quest.getTitle());
+						e.getWhoClicked().sendMessage(ChatColor.GREEN+TranslatedString.getString(70128, (Player)e.getWhoClicked())+": "+quest.getTitle());
 						e.getInventory().setItem(e.getSlot(), null);
 					}else{
-						e.getWhoClicked().sendMessage(ChatColor.RED+"You have not finish this quest yet");
+						e.getWhoClicked().sendMessage(ChatColor.RED+TranslatedString.getString(70129, (Player)e.getWhoClicked()));
 					}
 				}
 			}
-		}else if(e.getInventory().getTitle().equals(ChatColor.GOLD + "Fnished Quests")){
+		}else if(e.getInventory().getTitle().equals(ChatColor.GOLD + TranslatedString.getString(70125,(Player)e.getWhoClicked()))){
 			e.setCancelled(true);
 			if(e.getSlot() == 36){
 				e.getWhoClicked().openInventory(openPendingQuestGui((Player)e.getWhoClicked()));

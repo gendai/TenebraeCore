@@ -167,7 +167,7 @@ public class LoginScreen {
 		for (Hologram hol : misc) hol.delete();
 		playButton.delete();
 		loggingPlayers.remove(p);
-		
+
 		Main.connectedCharacters.put(p, new fr.tenebrae.MMOCore.Characters.Character(this.selectedChar));
 		
 		for (Player pm : Bukkit.getOnlinePlayers()) {

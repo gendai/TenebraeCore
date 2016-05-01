@@ -53,7 +53,6 @@ public class CharacterCreator implements Listener {
 
 	public CharacterCreator(Player p) {
 		Main.log.info("Initializing character creator for player "+p.getName());
-		this.p = p;
 		this.language = LanguageAPI.getStringLanguage(p);
 		if (creatingPlayers.containsKey(p.getName())) {
 			Main.log.info("Removing old registered CharacterCreator of player "+p.getName());

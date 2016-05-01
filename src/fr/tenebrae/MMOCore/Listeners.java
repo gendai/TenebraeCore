@@ -134,7 +134,6 @@ public class Listeners implements Listener {
 		for(Quest q : quests){
 			if(!q.completed){
 				for(QuestObjective obj : q.getObjectives()){
-					Bukkit.getConsoleSender().sendMessage("Quest is: "+q.getTitle()+" entity class is: "+entity);
 					if(obj.getType().equals(ObjectiveType.KILL) && obj.getData0().equals(entity)){
 						questsList.add(q);
 						objList.add(obj);
@@ -225,15 +224,12 @@ private void SpawnNPC(Player player){
 	player.sendMessage("Spawned!");
 }
 
-/*@EventHandler
-	public void onInteract(PlayerInteractEvent e){
-	}*/
 
 private void openQuestDiary(Player player){
 	if(!hasPendingQuests()){
-		player.sendMessage(ChatColor.DARK_AQUA+"You have no quest");
+		player.sendMessage(ChatColor.DARK_AQUA+TranslatedString.getString(70123, player));
 	}else{
-		Inventory invBooksQuest = Bukkit.createInventory(null, 9*5, ChatColor.GOLD + "Quests List");
+		Inventory invBooksQuest = Bukkit.createInventory(null, 9*5, ChatColor.GOLD + TranslatedString.getString(70124, player));
 		if(quests.size() > 0){
 			for(Quest q : quests){
 				if(!q.getFinished()){
@@ -256,24 +252,7 @@ private boolean hasPendingQuests(){
 
 @EventHandler
 public void onClick(InventoryClickEvent e){
-	if(e.getInventory().getTitle().equals(ChatColor.GOLD + "Quests")){
-		if(e.getSlot() == 13){
-			e.setCancelled(true);
-			if(!hasPendingQuests()){
-				e.getWhoClicked().sendMessage(ChatColor.DARK_AQUA+"You have no quest");
-			}else{
-				Inventory invBooksQuest = Bukkit.createInventory(null, 9*5, ChatColor.GOLD + "Quests List");
-				if(quests.size() > 0){
-					for(Quest q : quests){
-						if(!q.getFinished()){
-							invBooksQuest.addItem(q.getWrittenBook((Player)e.getWhoClicked()));
-						}
-					}
-				}
-				e.getWhoClicked().openInventory(invBooksQuest);
-			}
-		}
-	}else if(e.getInventory().getTitle().equals(ChatColor.GOLD+"Quests List")){
+	if(e.getInventory().getTitle().equals(ChatColor.GOLD+TranslatedString.getString(70124, (Player)e.getWhoClicked()))){
 		e.setCancelled(true);
 		Quest quest = questFromBookMeta(e.getCurrentItem().getItemMeta(),(Player)e.getWhoClicked());
 		quest.informUpdate((Player)e.getWhoClicked());

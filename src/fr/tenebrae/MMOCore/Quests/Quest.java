@@ -119,15 +119,16 @@ public class Quest {
 		String obj = "";
 		for(QuestObjective  qo : objectives){
 			if(qo.getType().equals(QuestObjective.ObjectiveType.KILL)){
-				obj += qo.getType().toString()+" "+TranslatedString.getString(CEntityTypes.getId((Class<? extends EntityInsentient>)qo.getData0()), Main.connectedCharacters.get(player).getLanguage())+" "+qo.getData1().toString()+", ";
+				obj += TranslatedString.getString(70112, player)+" "+qo.getData1().toString()+" "+TranslatedString.getString(CEntityTypes.getId((Class<? extends EntityInsentient>)qo.getData0()), player)+", ";
 			}else if(qo.getType().equals(QuestObjective.ObjectiveType.DISCOVER)){
-				obj += qo.getType().toString()+" "+qo.getData0().toString()+", ";
+				DiscoverCoord dc = (DiscoverCoord)qo.getData1();
+				obj += TranslatedString.getString(70114, player)+" "+qo.getData0().toString()+"["+dc.getX()+","+dc.getY()+","+dc.getZ()+"], ";
 			}
 		}
 		obj = obj.substring(0, obj.length()-2);
 		String rewa = "";
 		for(QuestReward qr : reward){
-			rewa += qr.getType().toString()+" "+qr.getData0().toString()+", ";
+			rewa += TranslatedString.getString(qr.getTranslateId(qr.getType()), player)+" "+qr.getData0().toString()+", ";
 		}
 		rewa = rewa.substring(0, rewa.length()-2);
 		NBTTagCompound bd = new NBTTagCompound();
@@ -137,13 +138,13 @@ public class Quest {
 		ItemMeta meta = writtenBook.getItemMeta();
 		ArrayList<String> lores = new ArrayList<>();
 		lores.add("§r");
-		lores.add(ChatColor.GOLD+"Conditions: ");
+		lores.add(ChatColor.GOLD+TranslatedString.getString(70117, player)+": ");
 		lores.add(ChatColor.GRAY+"    "+condi);
 		lores.add("§r");
-		lores.add(ChatColor.GOLD+"Objectif: ");
+		lores.add(ChatColor.GOLD+TranslatedString.getString(70118,player)+": ");
 		lores.add(ChatColor.GRAY+"    "+obj);
 		lores.add("§r");
-		lores.add(ChatColor.GOLD+"Récompenses: ");
+		lores.add(ChatColor.GOLD+TranslatedString.getString(70119,player)+": ");
 		lores.add(ChatColor.GRAY+"    "+rewa);
 		meta.setLore(lores);
 		meta.setDisplayName(this.title);
@@ -167,17 +168,17 @@ public class Quest {
 			case KILL:
 				KillCounter kc = (KillCounter)objectives.get(i).getData2();
 				if(kc.getCount() >= (int)objectives.get(i).getData1()){
-					s[i] = ChatColor.GOLD+"[Quest]"+this.title+ChatColor.GREEN+": Kill "+TranslatedString.getString(CEntityTypes.getId((Class<? extends EntityInsentient>)objectives.get(i).getData0()), Main.connectedCharacters.get(player).getLanguage())+" "+kc.getCount()+"/"+objectives.get(i).getData1();
+					s[i] = ChatColor.GOLD+"["+TranslatedString.getString(70113, player)+"]"+this.title+ChatColor.GREEN+": "+TranslatedString.getString(70112, player)+" "+TranslatedString.getString(CEntityTypes.getId((Class<? extends EntityInsentient>)objectives.get(i).getData0()), Main.connectedCharacters.get(player).getLanguage())+" "+kc.getCount()+"/"+objectives.get(i).getData1();
 				}else{
-					s[i] = ChatColor.GOLD+"[Quest]"+this.title+ChatColor.RED+": Kill "+TranslatedString.getString(CEntityTypes.getId((Class<? extends EntityInsentient>)objectives.get(i).getData0()), Main.connectedCharacters.get(player).getLanguage())+" "+kc.getCount()+"/"+objectives.get(i).getData1();
+					s[i] = ChatColor.GOLD+"["+TranslatedString.getString(70113, player)+"]"+this.title+ChatColor.RED+": "+TranslatedString.getString(70112, player)+" "+TranslatedString.getString(CEntityTypes.getId((Class<? extends EntityInsentient>)objectives.get(i).getData0()), Main.connectedCharacters.get(player).getLanguage())+" "+kc.getCount()+"/"+objectives.get(i).getData1();
 				}
 				break;
 			case DISCOVER:
 				DiscoverCoord dc  = (DiscoverCoord)objectives.get(0).getData1();
 				if(dc.isArrived){
-					s[i] = ChatColor.GOLD+"[Quest]"+this.title+ChatColor.GREEN+": You have discovered "+objectives.get(i).getData0();
+					s[i] = ChatColor.GOLD+"["+TranslatedString.getString(70113, player)+"]"+this.title+ChatColor.GREEN+": "+TranslatedString.getString(70121, player)+" "+objectives.get(i).getData0();
 				}else{
-					s[i] = ChatColor.GOLD+"[Quest]"+this.title+ChatColor.RED+": You didn't discovered "+objectives.get(i).getData0();
+					s[i] = ChatColor.GOLD+"["+TranslatedString.getString(70113, player)+"]"+this.title+ChatColor.RED+": "+TranslatedString.getString(70120, player)+" "+objectives.get(i).getData0();
 				}
 				break;
 			default:
@@ -191,7 +192,7 @@ public class Quest {
 			}
 		}
 		if(finish){
-			s[objectives.size()] = ChatColor.GREEN+"[Quest]"+this.title+": All objectives are completed.";
+			s[objectives.size()] = ChatColor.GREEN+"["+TranslatedString.getString(70113, player)+"]"+this.title+": "+TranslatedString.getString(70122, player)+".";
 			this.completed = true;
 		}
 		player.sendMessage(s);
