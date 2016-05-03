@@ -78,9 +78,10 @@ public class L10AlphaTestZombie extends MMOZombie {
 		if (this.target instanceof EntityPlayer) {
 			if (!((Player)(((EntityPlayer)target).getBukkitEntity())).isOnline()) {
 				this.target = null;
+			}else{
+				Bukkit.getPluginManager().callEvent(new MMODeathEvent(L10AlphaTestZombie.class, (Player)(((EntityPlayer)target).getBukkitEntity())));
 			}
 		}
-		Bukkit.getPluginManager().callEvent(new MMODeathEvent(L10AlphaTestZombie.class, (Player)(((EntityPlayer)target).getBukkitEntity())));
 		this.getBEntity().addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 100, 10, true, false));
 		this.getBEntity().addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 100, -10, true, false));
 		new Sound(this.deathSound, SoundCategory.HOSTILE).setLoc(this.getLocation()).setPitch(1.26F).play();
