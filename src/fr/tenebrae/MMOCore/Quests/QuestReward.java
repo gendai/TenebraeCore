@@ -1,11 +1,14 @@
 package fr.tenebrae.MMOCore.Quests;
 
+import java.io.Serializable;
+
 import org.bukkit.entity.Player;
 import fr.tenebrae.MMOCore.Main;
 import fr.tenebrae.MMOCore.Characters.Character;
 
-public class QuestReward {
+public class QuestReward implements Serializable{
 
+	private static final long serialVersionUID = 3291778940596185790L;
 	private Object data0;
 	private Object data1;
 	private Object data2;

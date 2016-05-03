@@ -1,10 +1,13 @@
 package fr.tenebrae.MMOCore.Quests;
 
+import java.io.Serializable;
+
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 
-public class QuestCondition {
+public class QuestCondition implements Serializable{
 	
+	private static final long serialVersionUID = 419780409392449689L;
 	private Object data0;
 	private Object data1;
 	private Object data2;

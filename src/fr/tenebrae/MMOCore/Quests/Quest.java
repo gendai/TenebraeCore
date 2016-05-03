@@ -1,5 +1,10 @@
 package fr.tenebrae.MMOCore.Quests;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import org.bukkit.Material;
@@ -15,8 +20,9 @@ import net.md_5.bungee.api.ChatColor;
 import net.minecraft.server.v1_9_R1.EntityInsentient;
 import net.minecraft.server.v1_9_R1.NBTTagCompound;
 
-public class Quest {
+public class Quest implements Serializable{
 
+	private static final long serialVersionUID = 6574860347438135379L;
 	private String title;
 	private String description;
 	private String niveauQuete;
@@ -28,7 +34,7 @@ public class Quest {
 	private boolean finished = false;
 	public boolean completed = false;
 
-	public Quest(String title, String description, String niveauQuest, int idNom, int idDescritpion,ArrayList<QuestObjective> objs, ArrayList<QuestCondition> conditions, ArrayList<QuestReward> rewards)
+	public Quest(String title, String description, String niveauQuest, int idNom, int idDescritpion, ArrayList<QuestObjective> objs, ArrayList<QuestCondition> conditions, ArrayList<QuestReward> rewards)
 	{
 		this.title = title;
 		this.description = description;
@@ -50,6 +56,9 @@ public class Quest {
 			r.giveReward(player);
 		}
 		this.finished = true;
+		Main.connectedCharacters.get(player).activeQuests.remove(this);
+		QuestFinished qf = new QuestFinished(Main.connectedCharacters.get(player).getCharacterName(), this.idNom);
+		qf.add();
 		return true;
 	}
 
@@ -74,8 +83,8 @@ public class Quest {
 		return this.reward;
 	}
 
-	public String getDescription() {
-		return description;
+	public String getDescription(Player player) {
+		return TranslatedString.getString(this.idDescription,player);
 	}
 
 	public void setDescription(String description) {
@@ -132,7 +141,7 @@ public class Quest {
 		}
 		rewa = rewa.substring(0, rewa.length()-2);
 		NBTTagCompound bd = new NBTTagCompound();
-		bd.setString("title", this.getTitle());
+		bd.setString("title", TranslatedString.getString(this.idNom, player));
 		nmsis.setTag(bd);
 		writtenBook = CraftItemStack.asBukkitCopy(nmsis);
 		ItemMeta meta = writtenBook.getItemMeta();
@@ -147,13 +156,13 @@ public class Quest {
 		lores.add(ChatColor.GOLD+TranslatedString.getString(70119,player)+": ");
 		lores.add(ChatColor.GRAY+"    "+rewa);
 		meta.setLore(lores);
-		meta.setDisplayName(this.title);
+		meta.setDisplayName(TranslatedString.getString(this.idNom,player));
 		writtenBook.setItemMeta(meta);
 		return writtenBook;
 	}
 
-	public String getTitle() {
-		return title;
+	public String getTitle(Player player) {
+		return TranslatedString.getString(this.idNom,player);
 	}
 
 	public void setTitle(String title) {
@@ -162,39 +171,54 @@ public class Quest {
 
 	@SuppressWarnings("unchecked")
 	public void informUpdate(Player player){
-		String[] s = new String[objectives.size()+1];
-		for(int i = 0; i < objectives.size(); i++){
-			switch(objectives.get(i).getType()){
-			case KILL:
-				KillCounter kc = (KillCounter)objectives.get(i).getData2();
-				if(kc.getCount() >= (int)objectives.get(i).getData1()){
-					s[i] = ChatColor.GOLD+"["+TranslatedString.getString(70113, player)+"]"+this.title+ChatColor.GREEN+": "+TranslatedString.getString(70112, player)+" "+TranslatedString.getString(CEntityTypes.getId((Class<? extends EntityInsentient>)objectives.get(i).getData0()), Main.connectedCharacters.get(player).getLanguage())+" "+kc.getCount()+"/"+objectives.get(i).getData1();
-				}else{
-					s[i] = ChatColor.GOLD+"["+TranslatedString.getString(70113, player)+"]"+this.title+ChatColor.RED+": "+TranslatedString.getString(70112, player)+" "+TranslatedString.getString(CEntityTypes.getId((Class<? extends EntityInsentient>)objectives.get(i).getData0()), Main.connectedCharacters.get(player).getLanguage())+" "+kc.getCount()+"/"+objectives.get(i).getData1();
-				}
-				break;
-			case DISCOVER:
-				DiscoverCoord dc  = (DiscoverCoord)objectives.get(0).getData1();
-				if(dc.isArrived){
-					s[i] = ChatColor.GOLD+"["+TranslatedString.getString(70113, player)+"]"+this.title+ChatColor.GREEN+": "+TranslatedString.getString(70121, player)+" "+objectives.get(i).getData0();
-				}else{
-					s[i] = ChatColor.GOLD+"["+TranslatedString.getString(70113, player)+"]"+this.title+ChatColor.RED+": "+TranslatedString.getString(70120, player)+" "+objectives.get(i).getData0();
-				}
-				break;
-			default:
-				break;
-			}
-		}
 		boolean finish = true;
 		for(QuestObjective obj : objectives){
 			if(!obj.isCompleted()){
 				finish = false;
 			}
 		}
+		String[] s = new String[objectives.size()+(finish ? 1 : 0)];
+		for(int i = 0; i < objectives.size(); i++){
+			switch(objectives.get(i).getType()){
+			case KILL:
+				KillCounter kc = (KillCounter)objectives.get(i).getData2();
+				if(kc.getCount() >= (int)objectives.get(i).getData1()){
+					s[i] = ChatColor.GOLD+"["+TranslatedString.getString(70113, player)+"]"+this.getTitle(player)+ChatColor.GREEN+": "+TranslatedString.getString(70112, player)+" "+TranslatedString.getString(CEntityTypes.getId((Class<? extends EntityInsentient>)objectives.get(i).getData0()), Main.connectedCharacters.get(player).getLanguage())+" "+kc.getCount()+"/"+objectives.get(i).getData1();
+				}else{
+					s[i] = ChatColor.GOLD+"["+TranslatedString.getString(70113, player)+"]"+this.getTitle(player)+ChatColor.RED+": "+TranslatedString.getString(70112, player)+" "+TranslatedString.getString(CEntityTypes.getId((Class<? extends EntityInsentient>)objectives.get(i).getData0()), Main.connectedCharacters.get(player).getLanguage())+" "+kc.getCount()+"/"+objectives.get(i).getData1();
+				}
+				break;
+			case DISCOVER:
+				DiscoverCoord dc  = (DiscoverCoord)objectives.get(0).getData1();
+				if(dc.isArrived){
+					s[i] = ChatColor.GOLD+"["+TranslatedString.getString(70113, player)+"]"+this.getTitle(player)+ChatColor.GREEN+": "+TranslatedString.getString(70121, player)+" "+objectives.get(i).getData0();
+				}else{
+					s[i] = ChatColor.GOLD+"["+TranslatedString.getString(70113, player)+"]"+this.getTitle(player)+ChatColor.RED+": "+TranslatedString.getString(70120, player)+" "+objectives.get(i).getData0();
+				}
+				break;
+			default:
+				break;
+			}
+		}
 		if(finish){
-			s[objectives.size()] = ChatColor.GREEN+"["+TranslatedString.getString(70113, player)+"]"+this.title+": "+TranslatedString.getString(70122, player)+".";
+			s[objectives.size()] = ChatColor.GREEN+"["+TranslatedString.getString(70113, player)+"]"+this.getTitle(player)+": "+TranslatedString.getString(70122, player)+".";
 			this.completed = true;
 		}
 		player.sendMessage(s);
 	}
+	
+	public Object deepClone() {
+		   try {
+		     ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		     ObjectOutputStream oos = new ObjectOutputStream(baos);
+		     oos.writeObject(this);
+		     ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+		     ObjectInputStream ois = new ObjectInputStream(bais);
+		     return ois.readObject();
+		   }
+		   catch (Exception e) {
+		     e.printStackTrace();
+		     return null;
+		   }
+		 }
 }

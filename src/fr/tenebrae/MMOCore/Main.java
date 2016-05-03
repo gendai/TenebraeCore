@@ -1,5 +1,6 @@
 package fr.tenebrae.MMOCore;
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
@@ -39,6 +40,9 @@ import fr.tenebrae.MMOCore.Characters.Character;
 import fr.tenebrae.MMOCore.Chat.ChatManager;
 import fr.tenebrae.MMOCore.Entities.CEntityTypes;
 import fr.tenebrae.MMOCore.Items.ItemRegistry;
+import fr.tenebrae.MMOCore.Quests.InitQuests;
+import fr.tenebrae.MMOCore.Quests.Quest;
+import fr.tenebrae.MMOCore.Quests.QuestFinished;
 import fr.tenebrae.MMOCore.Skin.CacheHandler;
 import fr.tenebrae.MMOCore.Utils.NamePlatesAPI;
 import fr.tenebrae.MMOCore.Utils.TranslatedString;
@@ -68,6 +72,10 @@ public class Main extends JavaPlugin {
 	public static String DB_LOOT_TEMPLATE;
 	public static String DB_STRING_TEMPLATE;
 	public static String DB_XP_TEMPLATE;
+	public static File questFinishedFile;
+	public static QuestFinished questFinished;
+	public static Map<Integer,Quest> quests;
+	public static InitQuests initQ;
 
 	public static DbManager db;
 	public BungeeMessageReceiver bmr;
@@ -92,6 +100,9 @@ public class Main extends JavaPlugin {
 		DB_LOOT_TEMPLATE = config.getString("sql.loot_template");
 		DB_STRING_TEMPLATE = config.getString("sql.string_template");
 		DB_XP_TEMPLATE = config.getString("sql.xp_template");
+		
+		questFinishedFile = new File(getDataFolder(),"quests.ser");
+		questFinished = new QuestFinished();
 
 		Main.db = TenebraeDB.getApi();
 		plugin = this;
@@ -100,6 +111,10 @@ public class Main extends JavaPlugin {
 		PluginManager pm = Bukkit.getServer().getPluginManager();
 		pm.registerEvents(new Listeners(this), this);
 
+		quests = new HashMap<Integer, Quest>();
+		initQ = new InitQuests();
+		initQ.spawn();
+		
 		bmr = new BungeeMessageReceiver(this);
 		this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
 		this.getServer().getMessenger().registerIncomingPluginChannel(this, "BungeeCord", bmr);

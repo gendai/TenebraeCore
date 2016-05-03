@@ -1,9 +1,12 @@
 package fr.tenebrae.MMOCore.Quests;
 
+import java.io.Serializable;
+
 import org.bukkit.Location;
 
-public class DiscoverCoord {
+public class DiscoverCoord implements Serializable{
 	
+	private static final long serialVersionUID = -4278161760051676215L;
 	double x,y,z,radx,rady;
 	boolean isArrived = false;
 	

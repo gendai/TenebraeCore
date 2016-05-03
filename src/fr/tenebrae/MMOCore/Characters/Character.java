@@ -36,7 +36,10 @@ import fr.tenebrae.MMOCore.Items.ItemUtils;
 import fr.tenebrae.MMOCore.LoginScreen.LoginScreen;
 import fr.tenebrae.MMOCore.Mechanics.MMOClass;
 import fr.tenebrae.MMOCore.Mechanics.Stats;
+import fr.tenebrae.MMOCore.Quests.DiscoverCoord;
+import fr.tenebrae.MMOCore.Quests.KillCounter;
 import fr.tenebrae.MMOCore.Quests.Quest;
+import fr.tenebrae.MMOCore.Quests.QuestObjective;
 import fr.tenebrae.MMOCore.Utils.ActionBarAPI;
 import fr.tenebrae.MMOCore.Utils.ItemStackBuilder;
 import fr.tenebrae.MMOCore.Utils.SQLHelper;
@@ -84,7 +87,6 @@ public class Character {
 			this.mmoClass = MMOClass.valueOf(charRow.getString("class"));
 			this.hp = charRow.getInt("hp");
 			this.money = charRow.getInt("money");
-			//TODO Deserialize activeQuests
 
 			String serializedStats = charRow.getString("stats");
 			String[] sStats = serializedStats.split("@");
@@ -95,7 +97,55 @@ public class Character {
 			for (Stats s : Stats.values()) statsBonus.put(s, 0.0D);
 
 			if (!charRow.getString("activeQuests").equals("none")) {
-
+				if (!charRow.getString("activeQuests").contains("#@#")) {
+					String[] qRaw = charRow.getString("activeQuests").split(";");
+					Quest quest = (Quest)Main.quests.get(Integer.parseInt(qRaw[0])).deepClone();
+					int index = 0;
+					for (String sObj : qRaw[1].split("/")) {
+						String[] params = sObj.split(",");
+						switch(params[0]){
+							case "KILL":
+								KillCounter kc = (KillCounter)quest.getObjectives().get(index).getData2();
+								kc.setCount(Integer.parseInt(params[1]));
+								quest.getObjectives().get(index).setData2(kc);
+								break;
+							case "DISCOVER":
+								DiscoverCoord dc = (DiscoverCoord)quest.getObjectives().get(index).getData1();
+								dc.setIsArrived(params[1].equals("true") ? true : false);
+								quest.getObjectives().get(index).setData1(dc);
+								break;
+							default:
+								break;
+						}
+						index++;
+					}
+					activeQuests.add(quest);
+				} else {
+					for (String sQuest : charRow.getString("activeQuests").split("#@#")) {
+						String[] qRaw = sQuest.split(";");
+						Quest quest = (Quest)Main.quests.get(Integer.parseInt(qRaw[0])).deepClone();
+						int index = 0;
+						for (String sObj : qRaw[1].split("/")) {
+							String[] params = sObj.split(",");
+							switch(params[0]){
+								case "KILL":
+									KillCounter kc = (KillCounter)quest.getObjectives().get(index).getData2();
+									kc.setCount(Integer.parseInt(params[1]));
+									quest.getObjectives().get(index).setData2(kc);
+									break;
+								case "DISCOVER":
+									DiscoverCoord dc = (DiscoverCoord)quest.getObjectives().get(index).getData1();
+									dc.setIsArrived(params[1].equals("true") ? true : false);
+									quest.getObjectives().get(index).setData1(dc);
+									break;
+								default:
+									break;
+							}
+							index++;
+						}
+						activeQuests.add(quest);
+					}
+				}
 			}
 
 			if (!charRow.getString("bags").equals("none")) {
@@ -418,7 +468,23 @@ public class Character {
 
 			if (!activeQuests.isEmpty()) {
 				for (Quest quest : activeQuests) {
-					serializedQuests += quest.toString()+"#@#";
+					serializedQuests += quest.getIdNom()+";";
+					for(QuestObjective obj : quest.getObjectives()){
+						switch (obj.getType()){
+						case KILL:
+							KillCounter kc = (KillCounter)obj.getData2();
+							serializedQuests += "KILL,"+kc.getCount()+"/";
+							break;
+						case DISCOVER:
+							DiscoverCoord dc = (DiscoverCoord)obj.getData1();
+							serializedQuests += "DISCOVER,"+dc.getIsArrived()+"/";
+							break;
+						default:
+							break;
+						}
+					}
+					serializedQuests = serializedQuests.substring(0, serializedQuests.length()-1);
+					serializedQuests += "#@#";
 				}
 				serializedQuests = serializedQuests.substring(0, serializedQuests.length()-3);
 			} else {
@@ -473,69 +539,69 @@ public class Character {
 
 		Inventory returned = this.accountPlayer.getInventory();
 		returned.setItem(9, new ItemStackBuilder()
-		.withMaterial(Material.PAPER)
-		.withAmount(1)
-		.withDisplayName(TranslatedString.getString(70000, language))
-		.build());
+				.withMaterial(Material.PAPER)
+				.withAmount(1)
+				.withDisplayName(TranslatedString.getString(70000, language))
+				.build());
 		returned.setItem(11, new ItemStackBuilder()
-		.withMaterial(Material.CHORUS_FRUIT)
-		.withAmount(1)
-		.withDisplayName(TranslatedString.getString(70001, language))
-		.build());
+				.withMaterial(Material.CHORUS_FRUIT)
+				.withAmount(1)
+				.withDisplayName(TranslatedString.getString(70001, language))
+				.build());
 		returned.setItem(12, new ItemStackBuilder()
-		.withMaterial(Material.CHORUS_FRUIT_POPPED)
-		.withAmount(1)
-		.withDisplayName(TranslatedString.getString(70002, language))
-		.build());
+				.withMaterial(Material.CHORUS_FRUIT_POPPED)
+				.withAmount(1)
+				.withDisplayName(TranslatedString.getString(70002, language))
+				.build());
 		returned.setItem(14, new ItemStackBuilder()
-		.withMaterial(Material.MELON_SEEDS)
-		.withAmount(1)
-		.withDisplayName(TranslatedString.getString(70003, language))
-		.build());
+				.withMaterial(Material.MELON_SEEDS)
+				.withAmount(1)
+				.withDisplayName(TranslatedString.getString(70003, language))
+				.build());
 		returned.setItem(15, new ItemStackBuilder()
-		.withMaterial(Material.PUMPKIN_SEEDS)
-		.withAmount(1)
-		.withDisplayName(TranslatedString.getString(70004, language))
-		.build());
+				.withMaterial(Material.PUMPKIN_SEEDS)
+				.withAmount(1)
+				.withDisplayName(TranslatedString.getString(70004, language))
+				.build());
 		returned.setItem(17, new ItemStackBuilder()
-		.withMaterial(Material.BARRIER)
-		.withAmount(1)
-		.withDisplayName(TranslatedString.getString(70005, language))
-		.build());
+				.withMaterial(Material.BARRIER)
+				.withAmount(1)
+				.withDisplayName(TranslatedString.getString(70005, language))
+				.build());
 		for (int k = 18; k < 24; k++) {
 			returned.setItem(k, new ItemStackBuilder()
-			.withMaterial(Material.BEETROOT_SEEDS)
-			.withAmount(1)
-			.withDisplayName(TranslatedString.getString(70006, language))
-			.build());
+					.withMaterial(Material.BEETROOT_SEEDS)
+					.withAmount(1)
+					.withDisplayName(TranslatedString.getString(70006, language))
+					.build());
 		}
 		returned.setItem(26, new ItemStackBuilder()
-		.withMaterial(Material.BOOK)
-		.withAmount(1)
-		.withDisplayName(TranslatedString.getString(70007, language))
-		.build());
+				.withMaterial(Material.BOOK)
+				.withAmount(1)
+				.withDisplayName(TranslatedString.getString(70007, language))
+				.build());
 		for (int k = 27; k < 31; k++) {
 			returned.setItem(k, new ItemStackBuilder()
-			.withMaterial(Material.RABBIT_HIDE)
-			.withAmount(1)
-			.withDisplayName(TranslatedString.getString(70008, language))
-			.build());
+					.withMaterial(Material.RABBIT_HIDE)
+					.withAmount(1)
+					.withDisplayName(TranslatedString.getString(70008, language))
+					.build());
 		}
 		returned.setItem(32, new ItemStackBuilder()
-		.withMaterial(Material.FEATHER)
-		.withAmount(1)
-		.withDisplayName(TranslatedString.getString(70009, language))
-		.build());
+				.withMaterial(Material.FEATHER)
+				.withAmount(1)
+				.withDisplayName(TranslatedString.getString(70009, language))
+				.build());
 		returned.setItem(33, new ItemStackBuilder()
-		.withMaterial(Material.FEATHER)
-		.withAmount(1)
-		.withDisplayName(TranslatedString.getString(70009, language))
-		.build());
+				.withMaterial(Material.FEATHER)
+				.withAmount(1)
+				.withDisplayName(TranslatedString.getString(70009, language))
+				.build());
 		returned.setItem(35, new ItemStackBuilder()
-		.withMaterial(Material.BOOK_AND_QUILL)
-		.withAmount(1)
-		.withDisplayName(TranslatedString.getString(70010, language))
-		.build());
+				.withMaterial(Material.BOOK_AND_QUILL)
+				.withAmount(1)
+				.withDisplayName(TranslatedString.getString(70010, language))
+				.build());
 	}
 
 	public static Inventory setupInventory(Item startWeapon, String language) {
@@ -543,69 +609,69 @@ public class Character {
 
 		returned.setItem(0, startWeapon.getItemStack());
 		returned.setItem(9, new ItemStackBuilder()
-		.withMaterial(Material.PAPER)
-		.withAmount(1)
-		.withDisplayName(TranslatedString.getString(70000, language))
-		.build());
+				.withMaterial(Material.PAPER)
+				.withAmount(1)
+				.withDisplayName(TranslatedString.getString(70000, language))
+				.build());
 		returned.setItem(11, new ItemStackBuilder()
-		.withMaterial(Material.CHORUS_FRUIT)
-		.withAmount(1)
-		.withDisplayName(TranslatedString.getString(70001, language))
-		.build());
+				.withMaterial(Material.CHORUS_FRUIT)
+				.withAmount(1)
+				.withDisplayName(TranslatedString.getString(70001, language))
+				.build());
 		returned.setItem(12, new ItemStackBuilder()
-		.withMaterial(Material.CHORUS_FRUIT_POPPED)
-		.withAmount(1)
-		.withDisplayName(TranslatedString.getString(70002, language))
-		.build());
+				.withMaterial(Material.CHORUS_FRUIT_POPPED)
+				.withAmount(1)
+				.withDisplayName(TranslatedString.getString(70002, language))
+				.build());
 		returned.setItem(14, new ItemStackBuilder()
-		.withMaterial(Material.MELON_SEEDS)
-		.withAmount(1)
-		.withDisplayName(TranslatedString.getString(70003, language))
-		.build());
+				.withMaterial(Material.MELON_SEEDS)
+				.withAmount(1)
+				.withDisplayName(TranslatedString.getString(70003, language))
+				.build());
 		returned.setItem(15, new ItemStackBuilder()
-		.withMaterial(Material.PUMPKIN_SEEDS)
-		.withAmount(1)
-		.withDisplayName(TranslatedString.getString(70004, language))
-		.build());
+				.withMaterial(Material.PUMPKIN_SEEDS)
+				.withAmount(1)
+				.withDisplayName(TranslatedString.getString(70004, language))
+				.build());
 		returned.setItem(17, new ItemStackBuilder()
-		.withMaterial(Material.BARRIER)
-		.withAmount(1)
-		.withDisplayName(TranslatedString.getString(70005, language))
-		.build());
+				.withMaterial(Material.BARRIER)
+				.withAmount(1)
+				.withDisplayName(TranslatedString.getString(70005, language))
+				.build());
 		for (int k = 18; k < 24; k++) {
 			returned.setItem(k, new ItemStackBuilder()
-			.withMaterial(Material.BEETROOT_SEEDS)
-			.withAmount(1)
-			.withDisplayName(TranslatedString.getString(70006, language))
-			.build());
+					.withMaterial(Material.BEETROOT_SEEDS)
+					.withAmount(1)
+					.withDisplayName(TranslatedString.getString(70006, language))
+					.build());
 		}
 		returned.setItem(26, new ItemStackBuilder()
-		.withMaterial(Material.BOOK)
-		.withAmount(1)
-		.withDisplayName(TranslatedString.getString(70007, language))
-		.build());
+				.withMaterial(Material.BOOK)
+				.withAmount(1)
+				.withDisplayName(TranslatedString.getString(70007, language))
+				.build());
 		for (int k = 27; k < 31; k++) {
 			returned.setItem(k, new ItemStackBuilder()
-			.withMaterial(Material.RABBIT_HIDE)
-			.withAmount(1)
-			.withDisplayName(TranslatedString.getString(70008, language))
-			.build());
+					.withMaterial(Material.RABBIT_HIDE)
+					.withAmount(1)
+					.withDisplayName(TranslatedString.getString(70008, language))
+					.build());
 		}
 		returned.setItem(32, new ItemStackBuilder()
-		.withMaterial(Material.FEATHER)
-		.withAmount(1)
-		.withDisplayName(TranslatedString.getString(70009, language))
-		.build());
+				.withMaterial(Material.FEATHER)
+				.withAmount(1)
+				.withDisplayName(TranslatedString.getString(70009, language))
+				.build());
 		returned.setItem(33, new ItemStackBuilder()
-		.withMaterial(Material.FEATHER)
-		.withAmount(1)
-		.withDisplayName(TranslatedString.getString(70009, language))
-		.build());
+				.withMaterial(Material.FEATHER)
+				.withAmount(1)
+				.withDisplayName(TranslatedString.getString(70009, language))
+				.build());
 		returned.setItem(35, new ItemStackBuilder()
-		.withMaterial(Material.BOOK_AND_QUILL)
-		.withAmount(1)
-		.withDisplayName(TranslatedString.getString(70010, language))
-		.build());
+				.withMaterial(Material.BOOK_AND_QUILL)
+				.withAmount(1)
+				.withDisplayName(TranslatedString.getString(70010, language))
+				.build());
 
 
 		return returned;
@@ -635,46 +701,46 @@ public class Character {
 		this.equipment.display(opened);
 		for (int k = 0; k < 7; k++) {
 			opened.setItem(4+(k*9), new ItemStackBuilder()
-			.withMaterial(Material.IRON_FENCE)
-			.withDisplayName("§r")
-			.build());
+					.withMaterial(Material.IRON_FENCE)
+					.withDisplayName("§r")
+					.build());
 		}
 		int k;
 		for (k = 0; k < bags.size(); k++) {
 			opened.setItem(59+k, new ItemStackBuilder()
-			.withMaterial(Material.LEATHER)
-			.withDisplayName(TranslatedString.getString(70102, accountPlayer)+(k+1))
-			.build());
+					.withMaterial(Material.LEATHER)
+					.withDisplayName(TranslatedString.getString(70102, accountPlayer)+(k+1))
+					.build());
 		}
 		while (k < 4) {
 			opened.setItem(59+k, new ItemStackBuilder()
-			.withMaterial(Material.RABBIT_HIDE)
-			.withDisplayName(TranslatedString.getString(70008, accountPlayer))
-			.build());
+					.withMaterial(Material.RABBIT_HIDE)
+					.withDisplayName(TranslatedString.getString(70008, accountPlayer))
+					.build());
 			k++;
 		}
 
 		opened.setItem(54, new ItemStackBuilder()
-		.withMaterial(Material.BOOK)
-		.withDisplayName("§6"+TranslatedString.getString(70104, accountPlayer))
-		.withLore(this.getDisplayedPrimaryStats())
-		.build());
+				.withMaterial(Material.BOOK)
+				.withDisplayName("§6"+TranslatedString.getString(70104, accountPlayer))
+				.withLore(this.getDisplayedPrimaryStats())
+				.build());
 		opened.setItem(55, new ItemStackBuilder()
-		.withMaterial(Material.BOOK)
-		.withDisplayName("§6"+TranslatedString.getString(70105, accountPlayer))
-		.withLore(this.getDisplayedSecondaryStats())
-		.build());
+				.withMaterial(Material.BOOK)
+				.withDisplayName("§6"+TranslatedString.getString(70105, accountPlayer))
+				.withLore(this.getDisplayedSecondaryStats())
+				.build());
 		opened.setItem(56, new ItemStackBuilder()
-		.withMaterial(Material.BOOK)
-		.withDisplayName("§a"+TranslatedString.getString(70106, accountPlayer))
-		.withLore(this.getDisplayedGeneralInfos())
-		.build());
+				.withMaterial(Material.BOOK)
+				.withDisplayName("§a"+TranslatedString.getString(70106, accountPlayer))
+				.withLore(this.getDisplayedGeneralInfos())
+				.build());
 		opened.setItem(57, new ItemStackBuilder()
-		.withMaterial(Material.BOOK)
-		.withDisplayName("§b"+TranslatedString.getString(70107, accountPlayer))
-		.withLore(Arrays.asList("§cWork In Progress"))
-		.build());
-		
+				.withMaterial(Material.BOOK)
+				.withDisplayName("§b"+TranslatedString.getString(70107, accountPlayer))
+				.withLore(Arrays.asList("§cWork In Progress"))
+				.build());
+
 		if (!bags.isEmpty()) {
 			bags.get(0).display(opened);
 			ItemStack is = opened.getItem(59);
@@ -696,22 +762,22 @@ public class Character {
 
 		opened.setContents(this.bags.get(slot-1).getInventory().getContents());
 		opened.setItem(opened.getSize()-9, new ItemStackBuilder()
-		.withMaterial(Material.RECORD_5)
-		.withAmount(1)
-		.withDisplayName(TranslatedString.getString(70101, accountPlayer))
-		.build());
+				.withMaterial(Material.RECORD_5)
+				.withAmount(1)
+				.withDisplayName(TranslatedString.getString(70101, accountPlayer))
+				.build());
 		for (int k = opened.getSize()-8; k < opened.getSize()-1; k++) {
 			opened.setItem(k, new ItemStackBuilder()
-			.withMaterial(Material.STAINED_GLASS_PANE)
-			.withDurability(7)
-			.withDisplayName("§r")
-			.build());
+					.withMaterial(Material.STAINED_GLASS_PANE)
+					.withDurability(7)
+					.withDisplayName("§r")
+					.build());
 		}
 		opened.setItem(opened.getSize()-1, new ItemStackBuilder()
-		.withMaterial(Material.RECORD_6)
-		.withAmount(1)
-		.withDisplayName(TranslatedString.getString(70100, accountPlayer))
-		.build());
+				.withMaterial(Material.RECORD_6)
+				.withAmount(1)
+				.withDisplayName(TranslatedString.getString(70100, accountPlayer))
+				.build());
 		accountPlayer.openInventory(opened);
 	}
 

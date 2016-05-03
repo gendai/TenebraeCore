@@ -1,6 +1,8 @@
 package fr.tenebrae.MMOCore.Entities;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import org.bukkit.Bukkit;
@@ -25,6 +27,7 @@ import fr.tenebrae.MMOCore.Items.Item;
 import fr.tenebrae.MMOCore.Mechanics.Damage;
 import fr.tenebrae.MMOCore.Quests.Quest;
 import fr.tenebrae.MMOCore.Quests.QuestCondition;
+import fr.tenebrae.MMOCore.Quests.QuestFinished;
 import fr.tenebrae.MMOCore.Quests.QuestObjective;
 import fr.tenebrae.MMOCore.Quests.QuestReward;
 import fr.tenebrae.MMOCore.Utils.TranslatedString;
@@ -33,7 +36,7 @@ import net.minecraft.server.v1_9_R1.EntityHuman;
 import net.minecraft.server.v1_9_R1.EntityVillager;
 import net.minecraft.server.v1_9_R1.EnumHand;
 import net.minecraft.server.v1_9_R1.World;
-import fr.tenebrae.MMOCore.Listeners;
+import fr.tenebrae.MMOCore.Main;
 import fr.tenebrae.MMOCore.Characters.Character;
 
 public class QuestNpc extends EntityVillager implements ICreature, IQuester, IClickable, Listener{
@@ -67,10 +70,13 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 	@Override
 	public Inventory openFinishedQuestGui(Player player){
 		Inventory inv = Bukkit.createInventory(null, 9*5, ChatColor.GOLD + TranslatedString.getString(70125,player));
-		for(Quest q : quests){
-			if(q.getFinished()){
+		ArrayList<Integer> questFinishedId = new QuestFinished().getQuestFinishedByPlayer(Main.connectedCharacters.get(player).getCharacterName());
+		ArrayList<Quest> questFinished = new ArrayList<>();
+		for(int id : questFinishedId){
+			questFinished.add(Main.quests.get(id));
+		}
+		for(Quest q : questFinished){
 				inv.addItem(q.getWrittenBook(player));
-			}
 		}
 		ItemStack panback = new ItemStack(Material.SIGN);
 		ItemMeta metaback = panback.getItemMeta();
@@ -90,10 +96,8 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 	@Override
 	public Inventory openPendingQuestGui(Player player){
 		Inventory inv = Bukkit.createInventory(null, 9*5, ChatColor.GOLD + TranslatedString.getString(70126, player));
-		for(Quest q : Listeners.quests/*Will be player.quests*/){
-			if(!q.getFinished()){
+		for(Quest q : Main.connectedCharacters.get(player).activeQuests){
 				inv.addItem(q.getWrittenBook(player));
-			}
 		}
 		ItemStack panback = new ItemStack(Material.SIGN);
 		ItemMeta metaback = panback.getItemMeta();
@@ -110,11 +114,20 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 		return inv;
 	}
 
+	private boolean containQuest(List<Quest> arrq, Quest q){
+		for(Quest qu : arrq){
+			if(qu.getIdNom() == q.getIdNom()){
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	@Override
 	public Inventory openAvailableQuestGui(Player player){
 		Inventory inv = Bukkit.createInventory(null, 9*5, ChatColor.GOLD + TranslatedString.getString(70127, player));
 		for(Quest q : quests){
-			if(q.canHaveQuest(player) && !Listeners.quests.contains(q)){
+			if(q.canHaveQuest(player) && !Main.questFinished.containQuest(q.getIdNom(), Main.connectedCharacters.get(player).getCharacterName()) && !containQuest(Main.connectedCharacters.get(player).activeQuests,q)){
 				inv.addItem(q.getWrittenBook(player));
 			}
 		}
@@ -145,8 +158,8 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 				ItemMeta qmeta = e.getCurrentItem().getItemMeta();
 				if(e.getClick().equals(ClickType.RIGHT)){
 				}else if(e.getClick().equals(ClickType.LEFT)){
-					e.getWhoClicked().sendMessage("NPC say: "+questFromBookMeta(qmeta, (Player)e.getWhoClicked()).getDescription());
-					Quest quest = questFromBookMeta(qmeta, (Player)e.getWhoClicked());
+					e.getWhoClicked().sendMessage("NPC say: "+questFromBookMetaNPC(qmeta, (Player)e.getWhoClicked()).getDescription((Player)e.getWhoClicked()));
+					Quest quest = questFromBookMetaNPC(qmeta, (Player)e.getWhoClicked());
 					giveQuest(quest, (Player)e.getWhoClicked());
 					e.getInventory().setItem(e.getSlot(), null);
 				}
@@ -161,9 +174,9 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 				ItemMeta qmeta = e.getCurrentItem().getItemMeta();
 				if(e.getClick().equals(ClickType.RIGHT)){
 				}else if(e.getClick().equals(ClickType.LEFT)){
-					Quest quest = questFromBookMeta(qmeta, (Player)e.getWhoClicked());
+					Quest quest = questFromBookMetaPlayer(qmeta, (Player)e.getWhoClicked());
 					if(quest.isDone((Player)e.getWhoClicked())){
-						e.getWhoClicked().sendMessage(ChatColor.GREEN+TranslatedString.getString(70128, (Player)e.getWhoClicked())+": "+quest.getTitle());
+						e.getWhoClicked().sendMessage(ChatColor.GREEN+TranslatedString.getString(70128, (Player)e.getWhoClicked())+": "+quest.getTitle((Player)e.getWhoClicked()));
 						e.getInventory().setItem(e.getSlot(), null);
 					}else{
 						e.getWhoClicked().sendMessage(ChatColor.RED+TranslatedString.getString(70129, (Player)e.getWhoClicked()));
@@ -180,11 +193,21 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 		}
 	}
 
-	public Quest questFromBookMeta(ItemMeta bookMeta, Player player){
-		for(Quest q : quests){
+	public Quest questFromBookMetaPlayer(ItemMeta bookMeta, Player player){
+		for(Quest q : Main.connectedCharacters.get(player).activeQuests){
 			ItemMeta qmeta = q.getWrittenBook(player).getItemMeta();
 			if(qmeta.getDisplayName().equals(bookMeta.getDisplayName())){
 				return q;
+			}
+		}
+		return null;
+	}
+	
+	public Quest questFromBookMetaNPC(ItemMeta bookMeta, Player player){
+		for(Quest q : quests){
+			ItemMeta qmeta = q.getWrittenBook(player).getItemMeta();
+			if(qmeta.getDisplayName().equals(bookMeta.getDisplayName())){
+				return (Quest)q.deepClone();
 			}
 		}
 		return null;
@@ -199,7 +222,7 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 
 	@Override
 	public boolean hasAlreadyQuest(Quest quest, Player player){
-		if(Listeners.quests.contains(quest)){
+		if(Main.connectedCharacters.get(player).activeQuests.contains(quest)){
 			return true;
 		}
 		return false;
@@ -222,8 +245,7 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 
 	@Override
 	public void giveQuest(Quest quest, Player player) {
-		//Todo add quest to player quest list.
-		Listeners.quests.add(quest);
+		Main.connectedCharacters.get(player).activeQuests.add(quest);
 	}
 
 	@Override

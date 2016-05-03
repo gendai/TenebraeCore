@@ -1,7 +1,10 @@
 package fr.tenebrae.MMOCore.Quests;
 
-public class QuestObjective {
+import java.io.Serializable;
 
+public class QuestObjective implements Serializable{
+
+	private static final long serialVersionUID = -5803052166553878820L;
 	private Object data0;
 	private Object data1;
 	private Object data2;
