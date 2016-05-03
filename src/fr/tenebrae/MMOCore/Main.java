@@ -41,8 +41,8 @@ import fr.tenebrae.MMOCore.Chat.ChatManager;
 import fr.tenebrae.MMOCore.Entities.CEntityTypes;
 import fr.tenebrae.MMOCore.Items.ItemRegistry;
 import fr.tenebrae.MMOCore.Quests.InitQuests;
-import fr.tenebrae.MMOCore.Quests.Quest;
 import fr.tenebrae.MMOCore.Quests.QuestFinished;
+import fr.tenebrae.MMOCore.Quests.QuestRegistry;
 import fr.tenebrae.MMOCore.Skin.CacheHandler;
 import fr.tenebrae.MMOCore.Utils.NamePlatesAPI;
 import fr.tenebrae.MMOCore.Utils.TranslatedString;
@@ -74,7 +74,6 @@ public class Main extends JavaPlugin {
 	public static String DB_XP_TEMPLATE;
 	public static File questFinishedFile;
 	public static QuestFinished questFinished;
-	public static Map<Integer,Quest> quests;
 	public static InitQuests initQ;
 
 	public static DbManager db;
@@ -111,10 +110,6 @@ public class Main extends JavaPlugin {
 		PluginManager pm = Bukkit.getServer().getPluginManager();
 		pm.registerEvents(new Listeners(this), this);
 
-		quests = new HashMap<Integer, Quest>();
-		initQ = new InitQuests();
-		initQ.spawn();
-		
 		bmr = new BungeeMessageReceiver(this);
 		this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
 		this.getServer().getMessenger().registerIncomingPluginChannel(this, "BungeeCord", bmr);
@@ -123,7 +118,10 @@ public class Main extends JavaPlugin {
 		NamePlatesAPI.init();
 		CEntityTypes.registerEntities();
 		ItemRegistry.registerItems();
+		QuestRegistry.registerQuests();
 		initEntitiesTranslator();
+		initQ = new InitQuests();
+		initQ.spawn();
 
 		new ChatManager().init(chatConfig);
 		new BukkitRunnable() {

@@ -29,6 +29,7 @@ import fr.tenebrae.MMOCore.Quests.Quest;
 import fr.tenebrae.MMOCore.Quests.QuestCondition;
 import fr.tenebrae.MMOCore.Quests.QuestFinished;
 import fr.tenebrae.MMOCore.Quests.QuestObjective;
+import fr.tenebrae.MMOCore.Quests.QuestRegistry;
 import fr.tenebrae.MMOCore.Quests.QuestReward;
 import fr.tenebrae.MMOCore.Utils.TranslatedString;
 import net.minecraft.server.v1_9_R1.Entity;
@@ -73,7 +74,7 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 		ArrayList<Integer> questFinishedId = new QuestFinished().getQuestFinishedByPlayer(Main.connectedCharacters.get(player).getCharacterName());
 		ArrayList<Quest> questFinished = new ArrayList<>();
 		for(int id : questFinishedId){
-			questFinished.add(Main.quests.get(id));
+			questFinished.add(QuestRegistry.getQuest(id));
 		}
 		for(Quest q : questFinished){
 				inv.addItem(q.getWrittenBook(player));
@@ -116,7 +117,7 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 
 	private boolean containQuest(List<Quest> arrq, Quest q){
 		for(Quest qu : arrq){
-			if(qu.getIdNom() == q.getIdNom()){
+			if(QuestRegistry.getId(qu.getClass()) == QuestRegistry.getId(q.getClass())){
 				return true;
 			}
 		}
@@ -127,7 +128,7 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 	public Inventory openAvailableQuestGui(Player player){
 		Inventory inv = Bukkit.createInventory(null, 9*5, ChatColor.GOLD + TranslatedString.getString(70127, player));
 		for(Quest q : quests){
-			if(q.canHaveQuest(player) && !Main.questFinished.containQuest(q.getIdNom(), Main.connectedCharacters.get(player).getCharacterName()) && !containQuest(Main.connectedCharacters.get(player).activeQuests,q)){
+			if(q.canHaveQuest(player) && !Main.questFinished.containQuest(QuestRegistry.getId(q.getClass()), Main.connectedCharacters.get(player).getCharacterName()) && !containQuest(Main.connectedCharacters.get(player).activeQuests,q)){
 				inv.addItem(q.getWrittenBook(player));
 			}
 		}

@@ -23,16 +23,20 @@ import net.minecraft.server.v1_9_R1.NBTTagCompound;
 public class Quest implements Serializable{
 
 	private static final long serialVersionUID = 6574860347438135379L;
-	private String title;
-	private String description;
+	protected String title;
+	protected String description;
 	private String niveauQuete;
-	private int idNom;
-	private int idDescription;
+	protected int idNom;
+	protected int idDescription;
 	private ArrayList<QuestObjective> objectives = new ArrayList<>();
 	private ArrayList<QuestCondition> conditions = new ArrayList<>();
 	private ArrayList<QuestReward> reward = new ArrayList<>();
 	private boolean finished = false;
 	public boolean completed = false;
+	
+	public Quest(){
+		
+	}
 
 	public Quest(String title, String description, String niveauQuest, int idNom, int idDescritpion, ArrayList<QuestObjective> objs, ArrayList<QuestCondition> conditions, ArrayList<QuestReward> rewards)
 	{
@@ -57,7 +61,7 @@ public class Quest implements Serializable{
 		}
 		this.finished = true;
 		Main.connectedCharacters.get(player).activeQuests.remove(this);
-		QuestFinished qf = new QuestFinished(Main.connectedCharacters.get(player).getCharacterName(), this.idNom);
+		QuestFinished qf = new QuestFinished(Main.connectedCharacters.get(player).getCharacterName(), QuestRegistry.getId(this.getClass()));
 		qf.add();
 		return true;
 	}
@@ -115,6 +119,18 @@ public class Quest implements Serializable{
 		return conditions;
 	}
 
+
+	public void setObjectives(ArrayList<QuestObjective> objectives) {
+		this.objectives = objectives;
+	}
+
+	public void setConditions(ArrayList<QuestCondition> conditions) {
+		this.conditions = conditions;
+	}
+
+	public void setReward(ArrayList<QuestReward> reward) {
+		this.reward = reward;
+	}
 
 	@SuppressWarnings("unchecked")
 	public ItemStack getWrittenBook(Player player){

@@ -40,6 +40,7 @@ import fr.tenebrae.MMOCore.Quests.DiscoverCoord;
 import fr.tenebrae.MMOCore.Quests.KillCounter;
 import fr.tenebrae.MMOCore.Quests.Quest;
 import fr.tenebrae.MMOCore.Quests.QuestObjective;
+import fr.tenebrae.MMOCore.Quests.QuestRegistry;
 import fr.tenebrae.MMOCore.Utils.ActionBarAPI;
 import fr.tenebrae.MMOCore.Utils.ItemStackBuilder;
 import fr.tenebrae.MMOCore.Utils.SQLHelper;
@@ -99,7 +100,7 @@ public class Character {
 			if (!charRow.getString("activeQuests").equals("none")) {
 				if (!charRow.getString("activeQuests").contains("#@#")) {
 					String[] qRaw = charRow.getString("activeQuests").split(";");
-					Quest quest = (Quest)Main.quests.get(Integer.parseInt(qRaw[0])).deepClone();
+					Quest quest = (Quest)QuestRegistry.getQuest(Integer.parseInt(qRaw[0])).deepClone();
 					int index = 0;
 					for (String sObj : qRaw[1].split("/")) {
 						String[] params = sObj.split(",");
@@ -123,7 +124,7 @@ public class Character {
 				} else {
 					for (String sQuest : charRow.getString("activeQuests").split("#@#")) {
 						String[] qRaw = sQuest.split(";");
-						Quest quest = (Quest)Main.quests.get(Integer.parseInt(qRaw[0])).deepClone();
+						Quest quest = (Quest)QuestRegistry.getQuest(Integer.parseInt(qRaw[0])).deepClone();
 						int index = 0;
 						for (String sObj : qRaw[1].split("/")) {
 							String[] params = sObj.split(",");
@@ -468,7 +469,7 @@ public class Character {
 
 			if (!activeQuests.isEmpty()) {
 				for (Quest quest : activeQuests) {
-					serializedQuests += quest.getIdNom()+";";
+					serializedQuests += QuestRegistry.getId(quest.getClass())+";";
 					for(QuestObjective obj : quest.getObjectives()){
 						switch (obj.getType()){
 						case KILL:
