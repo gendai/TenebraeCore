@@ -22,6 +22,7 @@ import fr.tenebrae.MMOCore.Items.Coins.CopperCoin;
 import fr.tenebrae.MMOCore.Items.Coins.GoldCoin;
 import fr.tenebrae.MMOCore.Items.Coins.SilverCoin;
 import fr.tenebrae.MMOCore.Mechanics.Sound;
+import net.minecraft.server.v1_9_R1.Entity;
 import net.minecraft.server.v1_9_R1.EntityPlayer;
 import net.minecraft.server.v1_9_R1.EnumParticle;
 import net.minecraft.server.v1_9_R1.SoundCategory;
@@ -78,8 +79,11 @@ public class L10AlphaTestZombie extends MMOZombie {
 		if (this.target instanceof EntityPlayer) {
 			if (!((Player)(((EntityPlayer)target).getBukkitEntity())).isOnline()) {
 				this.target = null;
-			}else{
-				Bukkit.getPluginManager().callEvent(new MMODeathEvent(L10AlphaTestZombie.class, (Player)(((EntityPlayer)target).getBukkitEntity())));
+			}
+		}
+		for(Entity en : this.aggroList.keySet()){
+			if(en instanceof EntityPlayer){
+				Bukkit.getPluginManager().callEvent(new MMODeathEvent(L10AlphaTestZombie.class, (Player)(((EntityPlayer)en).getBukkitEntity())));
 			}
 		}
 		this.getBEntity().addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 100, 10, true, false));
