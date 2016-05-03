@@ -1,18 +1,25 @@
 package fr.tenebrae.MMOCore.Entities.Events;
 
-import org.bukkit.entity.Player;
+import java.util.ArrayList;
+import java.util.Set;
+
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
+
+import net.minecraft.server.v1_9_R1.Entity;
 
 public class MMODeathEvent extends Event{
 
 	public static HandlerList handlers = new HandlerList();
-	private Player player;
+	private ArrayList<Entity> entities;
 	private Class<?> entity;
 	
-	public MMODeathEvent(Class<?> entity, Player player){
-		this.player = player;
+	public MMODeathEvent(Class<?> entity, Set<Entity> entities){
+		this.entities = new ArrayList<>();
 		this.entity = entity;
+		for(Entity en : entities){
+			this.entities.add(en);
+		}
 	}
 	
 	@Override
@@ -24,8 +31,8 @@ public class MMODeathEvent extends Event{
 		return handlers;
 	}
 
-	public Player getPlayer() {
-		return player;
+	public ArrayList<Entity> getEntities() {
+		return entities;
 	}
 
 	public Class<?> getEntity() {

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Random;
 
 import net.minecraft.server.v1_9_R1.Entity;
+import net.minecraft.server.v1_9_R1.EntityPlayer;
 import net.minecraft.server.v1_9_R1.Tuple;
 
 import org.bukkit.Bukkit;
@@ -148,13 +149,17 @@ public class Listeners implements Listener {
 
 	@EventHandler
 	public void onMMODeath(MMODeathEvent event){
-		Tuple<ArrayList<Quest>, ArrayList<QuestObjective>> tupl = entityInQuestKill(event.getEntity(), event.getPlayer());
-		if(tupl.a().size() > 0){
-			for(int i = 0; i < tupl.a().size(); i++){
-				KillCounter killc = (KillCounter)tupl.b().get(i).getData2();
-				killc.add(1);
-				tupl.b().get(i).setData2(killc);
-				tupl.a().get(i).informUpdate(event.getPlayer());
+		for(Entity entity : event.getEntities()){
+			if(entity instanceof EntityPlayer){
+				Tuple<ArrayList<Quest>, ArrayList<QuestObjective>> tupl = entityInQuestKill(event.getEntity(),(Player)(((EntityPlayer)entity).getBukkitEntity()));
+				if(tupl.a().size() > 0){
+					for(int i = 0; i < tupl.a().size(); i++){
+						KillCounter killc = (KillCounter)tupl.b().get(i).getData2();
+						killc.add(1);
+						tupl.b().get(i).setData2(killc);
+						tupl.a().get(i).informUpdate((Player)(((EntityPlayer)entity).getBukkitEntity()));
+					}
+				}
 			}
 		}
 	}
@@ -236,9 +241,9 @@ public class Listeners implements Listener {
 		}else{*/
 		if(ch.activeQuests.size() > 0){
 			Inventory invBooksQuest = Bukkit.createInventory(null, 9*5, ChatColor.GOLD + TranslatedString.getString(70124, player));
-				for(Quest q : ch.activeQuests){
-						invBooksQuest.addItem(q.getWrittenBook(player));
-				}
+			for(Quest q : ch.activeQuests){
+				invBooksQuest.addItem(q.getWrittenBook(player));
+			}
 			player.openInventory(invBooksQuest);
 		}else{
 			player.sendMessage(ChatColor.DARK_AQUA+TranslatedString.getString(70123, player));
