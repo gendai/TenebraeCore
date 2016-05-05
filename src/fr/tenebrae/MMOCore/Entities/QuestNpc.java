@@ -208,7 +208,7 @@ public class QuestNpc extends EntityVillager implements ICreature, IQuester, ICl
 		for(Quest q : quests){
 			ItemMeta qmeta = q.getWrittenBook(player).getItemMeta();
 			if(qmeta.getDisplayName().equals(bookMeta.getDisplayName())){
-				return (Quest)q.deepClone();
+				return (Quest)QuestRegistry.getQuest(QuestRegistry.getId(q.getClass()));
 			}
 		}
 		return null;

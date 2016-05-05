@@ -100,7 +100,7 @@ public class Character {
 			if (!charRow.getString("activeQuests").equals("none")) {
 				if (!charRow.getString("activeQuests").contains("#@#")) {
 					String[] qRaw = charRow.getString("activeQuests").split(";");
-					Quest quest = (Quest)QuestRegistry.getQuest(Integer.parseInt(qRaw[0])).deepClone();
+					Quest quest = (Quest)QuestRegistry.getQuest(Integer.parseInt(qRaw[0]));
 					int index = 0;
 					for (String sObj : qRaw[1].split("/")) {
 						String[] params = sObj.split(",");
@@ -124,7 +124,7 @@ public class Character {
 				} else {
 					for (String sQuest : charRow.getString("activeQuests").split("#@#")) {
 						String[] qRaw = sQuest.split(";");
-						Quest quest = (Quest)QuestRegistry.getQuest(Integer.parseInt(qRaw[0])).deepClone();
+						Quest quest = (Quest)QuestRegistry.getQuest(Integer.parseInt(qRaw[0]));
 						int index = 0;
 						for (String sObj : qRaw[1].split("/")) {
 							String[] params = sObj.split(",");
